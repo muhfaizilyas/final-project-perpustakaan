@@ -6,6 +6,8 @@ import { formatTanggal, formatRupiah } from "@/lib/format";
 import PageShell from "@/components/PageShell";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
+import AksiForm from "@/components/AksiForm";
+import { ajukanPinjam } from "@/actions/loan";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -47,6 +49,19 @@ export default async function DetailBukuPage({ params }) {
   const rataRata = reviews.length
     ? (reviews.reduce((jumlah, r) => jumlah + r.rating, 0) / reviews.length).toFixed(1)
     : null;
+
+  // Status khusus mahasiswa: diblokir denda? sudah punya pengajuan/pinjaman aktif untuk buku ini?
+  let status = { diblokir: false, aktif: false };
+  if (user?.role === "mahasiswa") {
+    const { rows } = await pool.query(
+      `SELECT
+         EXISTS (SELECT 1 FROM loans WHERE user_id = $1 AND status_denda = 'Tertunggak') AS diblokir,
+         EXISTS (SELECT 1 FROM loans WHERE user_id = $1 AND book_id = $2
+                  AND status_pinjam IN ('Menunggu Konfirmasi', 'Sedang Dipinjam')) AS aktif`,
+      [user.id, bukuId]
+    );
+    status = rows[0];
+  }
 
   const info = [
     ["ISBN", b.isbn],
@@ -94,6 +109,33 @@ export default async function DetailBukuPage({ params }) {
                 </div>
               ))}
             </dl>
+
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              {!user ? (
+                <p className="text-sm text-slate-600">
+                  <Link href="/login" className="font-semibold text-sky-600 hover:text-sky-700">Masuk</Link> atau{" "}
+                  <Link href="/register" className="font-semibold text-sky-600 hover:text-sky-700">daftar sebagai mahasiswa</Link>{" "}
+                  untuk mengajukan peminjaman.
+                </p>
+              ) : user.role !== "mahasiswa" ? (
+                <p className="text-sm text-slate-500">Peminjaman hanya tersedia untuk akun mahasiswa.</p>
+              ) : status.diblokir ? (
+                <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                  Pengajuan pinjam diblokir karena kamu masih punya denda tertunggak.
+                </p>
+              ) : status.aktif ? (
+                <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+                  Kamu sudah punya pengajuan atau peminjaman aktif untuk buku ini.{" "}
+                  <Link href="/dashboard/mahasiswa" className="font-semibold underline">Lihat dashboard</Link>
+                </p>
+              ) : b.stok_tersedia <= 0 ? (
+                <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  Stok sedang habis, belum bisa dipinjam.
+                </p>
+              ) : (
+                <AksiForm action={ajukanPinjam} id={b.id} label="Ajukan Pinjam" variant="dark" large />
+              )}
+            </div>
           </div>
         </section>
 
