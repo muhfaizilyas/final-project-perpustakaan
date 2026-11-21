@@ -1,14 +1,17 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Perpustakaan Kampus",
-  description: "Sistem manajemen perpustakaan kampus",
+  title: {
+    default: "RakBaca",
+    template: "%s · RakBaca",
+  },
+  description: "Sistem manajemen perpustakaan kampus RakBaca",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="id">
-      <body className="min-h-screen bg-slate-50 text-slate-800 antialiased">
+    <html lang="id" suppressHydrationWarning>
+      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
         {children}
       </body>
     </html>
