@@ -1,7 +1,7 @@
 import StatusBadge from "@/components/StatusBadge";
 
 /** Mendukung prop item={...} maupun penyebaran properti {...announcement}. */
-export default function AnnouncementCard({ item: itemProp, ...announcementFields }) {
+export default function AnnouncementCard({ item: itemProp, hideStatus = false, ...announcementFields }) {
   const item =
     itemProp && typeof itemProp === "object" && !Array.isArray(itemProp)
       ? itemProp
@@ -33,7 +33,7 @@ export default function AnnouncementCard({ item: itemProp, ...announcementFields
           </h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">{summary}</p>
         </div>
-        <StatusBadge status={status} />
+        {hideStatus ? null : <StatusBadge status={status} />}
       </div>
       <p className="mt-4 text-xs text-slate-500">{date}</p>
     </article>
