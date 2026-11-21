@@ -1,69 +1,106 @@
 import Link from "next/link";
+import pool from "@/lib/db";
+import { requireRole } from "@/lib/auth";
+import { formatTanggal } from "@/lib/format";
 import DashboardShell from "@/components/DashboardShell";
 import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 
-const stats = [
-  { label: "Admin Aktif", value: "3", note: "Pengelola sistem utama", tone: "sky" },
-  { label: "Pegawai", value: "12", note: "Akun staf perpustakaan", tone: "emerald" },
-  { label: "Mahasiswa", value: "428", note: "Pengguna terdaftar", tone: "amber" },
-  { label: "Kategori", value: "18", note: "Master data buku", tone: "rose" },
-];
+export const metadata = { title: "Dashboard Admin" };
 
-const activities = [
-  ["Tambah kategori baru", "2 menit lalu", "success"],
-  ["Perbarui data pengguna", "14 menit lalu", "info"],
-  ["Sinkronisasi buku populer", "1 jam lalu", "default"],
-];
+const tombol = "rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const user = await requireRole("admin");
+
+  const [ringkasan, peminjamanTerbaru, perKategori] = await Promise.all([
+    pool.query(`
+      SELECT
+        (SELECT COUNT(*)::int FROM users WHERE role = 'mahasiswa' AND is_active) AS mahasiswa,
+        (SELECT COUNT(*)::int FROM users WHERE role = 'pegawai'   AND is_active) AS pegawai,
+        (SELECT COUNT(*)::int FROM books)      AS buku,
+        (SELECT COUNT(*)::int FROM categories) AS kategori`),
+    pool.query(`
+      SELECT l.id, u.nama_lengkap, b.judul, l.status_pinjam,
+             l.tanggal_pengajuan::date::text AS tanggal
+        FROM loans l
+        JOIN users u ON u.id = l.user_id
+        JOIN books b ON b.id = l.book_id
+       ORDER BY l.tanggal_pengajuan DESC, l.id DESC
+       LIMIT 5`),
+    pool.query(`
+      SELECT c.nama, COUNT(b.id)::int AS jumlah
+        FROM categories c
+        LEFT JOIN books b ON b.category_id = c.id
+       GROUP BY c.id
+       ORDER BY jumlah DESC, c.nama`),
+  ]);
+  const r = ringkasan.rows[0];
+  const maks = Math.max(1, ...perKategori.rows.map((k) => k.jumlah));
+
+  const stats = [
+    { label: "Mahasiswa Aktif", value: r.mahasiswa, note: "Akun mahasiswa terdaftar", tone: "sky" },
+    { label: "Pegawai", value: r.pegawai, note: "Akun staf perpustakaan", tone: "emerald" },
+    { label: "Total Buku", value: r.buku, note: "Judul di koleksi", tone: "amber" },
+    { label: "Kategori", value: r.kategori, note: "Master data buku", tone: "rose" },
+  ];
+
   return (
     <DashboardShell
-      role="admin"
+      user={user}
       title="Dashboard Admin"
-      subtitle="Panel pengelolaan utama untuk melihat statistik, kategori, dan aktivitas sistem."
-      actions={(
+      subtitle="Ringkasan pengguna, koleksi, dan aktivitas peminjaman terbaru."
+      actions={
         <>
-          <StatusBadge tone="warning">Admin Panel</StatusBadge>
-          <Link href="/dashboard/admin/kategori" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
-            Kelola Kategori
-          </Link>
+          <Link href="/dashboard/buku" className={tombol}>Kelola Buku</Link>
+          <Link href="/dashboard/admin/kategori" className={tombol}>Kelola Kategori</Link>
         </>
-      )}
+      }
     >
       <div className="space-y-8">
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((item) => <MetricCard key={item.label} {...item} />)}
         </section>
 
-        <section className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Aktivitas Terbaru</h2>
-                <p className="mt-1 text-sm text-slate-500">Log ringkas untuk memantau perubahan penting.</p>
-              </div>
-              <StatusBadge tone="info">Realtime look</StatusBadge>
-            </div>
+            <h2 className="text-lg font-bold text-slate-900">Peminjaman Terbaru</h2>
+            <p className="mt-1 text-sm text-slate-500">Lima pengajuan terakhir dari mahasiswa.</p>
             <div className="mt-6 space-y-3">
-              {activities.map(([title, time, tone]) => (
-                <div key={title} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                  <div>
-                    <p className="font-medium text-slate-900">{title}</p>
-                    <p className="text-sm text-slate-500">{time}</p>
+              {peminjamanTerbaru.rows.length === 0 ? (
+                <EmptyState title="Belum ada peminjaman" description="Pengajuan dari mahasiswa akan muncul di sini." />
+              ) : (
+                peminjamanTerbaru.rows.map((l) => (
+                  <div key={l.id} className="flex flex-col gap-2 rounded-2xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900">{l.judul}</p>
+                      <p className="text-sm text-slate-500">{l.nama_lengkap} · {formatTanggal(l.tanggal)}</p>
+                    </div>
+                    <StatusBadge status={l.status_pinjam} />
                   </div>
-                  <StatusBadge tone={tone}>{tone === "success" ? "Berhasil" : tone === "info" ? "Info" : "Baru"}</StatusBadge>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
-          <EmptyState
-            title="Ruang statistik tambahan"
-            description="Area ini bisa dipakai untuk chart, laporan, atau ringkasan data ketika backend kamu sudah berkembang."
-            action={<Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-sky-700">Tambah Kategori</Link>}
-          />
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">Buku per Kategori</h2>
+            <p className="mt-1 text-sm text-slate-500">Sebaran judul di setiap kategori.</p>
+            <ul className="mt-6 space-y-4">
+              {perKategori.rows.map((k) => (
+                <li key={k.nama}>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="font-medium text-slate-700">{k.nama}</span>
+                    <span className="text-slate-500">{k.jumlah} buku</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500" style={{ width: `${(k.jumlah / maks) * 100}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       </div>
     </DashboardShell>

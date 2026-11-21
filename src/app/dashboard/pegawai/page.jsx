@@ -1,71 +1,117 @@
 import Link from "next/link";
+import pool from "@/lib/db";
+import { requireRole } from "@/lib/auth";
+import { formatTanggal, formatRupiah } from "@/lib/format";
 import DashboardShell from "@/components/DashboardShell";
 import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 
-const stats = [
-  { label: "Pengajuan Baru", value: "24", note: "Menunggu pemeriksaan", tone: "sky" },
-  { label: "Sedang Dipinjam", value: "61", note: "Transaksi aktif", tone: "emerald" },
-  { label: "Perlu Konfirmasi", value: "11", note: "Pengembalian menunggu", tone: "amber" },
-  { label: "Denda", value: "Rp 1.250K", note: "Akumulasi keterlambatan", tone: "rose" },
-];
+export const metadata = { title: "Dashboard Pegawai" };
 
-export default function PegawaiDashboardPage() {
+export default async function PegawaiDashboardPage() {
+  const user = await requireRole("pegawai");
+
+  const [ringkasan, antrian, terlambat] = await Promise.all([
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE status_pinjam = 'Menunggu Konfirmasi')::int AS menunggu,
+        COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam')::int     AS dipinjam,
+        COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam'
+                           AND tanggal_jatuh_tempo < CURRENT_DATE)::int    AS terlambat,
+        COALESCE(SUM(denda_nominal) FILTER (WHERE status_denda = 'Tertunggak'), 0) AS denda
+      FROM loans`),
+    pool.query(`
+      SELECT l.id, u.nama_lengkap, b.judul, l.tanggal_pengajuan::date::text AS tanggal
+        FROM loans l
+        JOIN users u ON u.id = l.user_id
+        JOIN books b ON b.id = l.book_id
+       WHERE l.status_pinjam = 'Menunggu Konfirmasi'
+       ORDER BY l.tanggal_pengajuan, l.id
+       LIMIT 5`),
+    pool.query(`
+      SELECT l.id, u.nama_lengkap, b.judul,
+             l.tanggal_jatuh_tempo::text AS jatuh_tempo,
+             (CURRENT_DATE - l.tanggal_jatuh_tempo)::int AS hari_terlambat
+        FROM loans l
+        JOIN users u ON u.id = l.user_id
+        JOIN books b ON b.id = l.book_id
+       WHERE l.status_pinjam = 'Sedang Dipinjam' AND l.tanggal_jatuh_tempo < CURRENT_DATE
+       ORDER BY l.tanggal_jatuh_tempo
+       LIMIT 5`),
+  ]);
+  const r = ringkasan.rows[0];
+
+  const stats = [
+    { label: "Pengajuan Baru", value: r.menunggu, note: "Menunggu konfirmasi", tone: "sky" },
+    { label: "Sedang Dipinjam", value: r.dipinjam, note: "Transaksi aktif", tone: "emerald" },
+    { label: "Terlambat", value: r.terlambat, note: "Melewati jatuh tempo", tone: "amber" },
+    { label: "Denda Tertunggak", value: formatRupiah(r.denda), note: "Belum dilunasi", tone: "rose" },
+  ];
+
   return (
     <DashboardShell
-      role="pegawai"
+      user={user}
       title="Dashboard Pegawai"
-      subtitle="Panel untuk memantau peminjaman, pengembalian, dan pengumuman operasional perpustakaan."
-      actions={(
-        <>
-          <StatusBadge tone="success">Pegawai</StatusBadge>
-          <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
-            Kelola Buku
-          </Link>
-        </>
-      )}
+      subtitle="Pantau pengajuan, peminjaman aktif, dan keterlambatan."
+      actions={
+        <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
+          Kelola Buku
+        </Link>
+      }
     >
       <div className="space-y-8">
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((item) => <MetricCard key={item.label} {...item} />)}
         </section>
 
-        <section className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="grid grid-cols-1 gap-8 xl:grid-cols-2">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Antrian Pemeriksaan</h2>
-                <p className="mt-1 text-sm text-slate-500">Daftar pengajuan pinjam yang siap di-approve atau ditolak.</p>
+                <h2 className="text-lg font-bold text-slate-900">Antrian Pengajuan</h2>
+                <p className="mt-1 text-sm text-slate-500">Pengajuan pinjam tertua yang belum diproses.</p>
               </div>
-              <StatusBadge tone="warning">6 pending</StatusBadge>
+              <StatusBadge tone="warning">{r.menunggu} menunggu</StatusBadge>
             </div>
             <div className="mt-6 space-y-3">
-              {[
-                ["Siti Aisyah", "Clean Code", "Menunggu Konfirmasi"],
-                ["Bima Pratama", "Atomic Habits", "Menunggu Konfirmasi"],
-                ["Nadya Putri", "Algoritma & Struktur Data", "Menunggu Konfirmasi"],
-              ].map(([name, book, status]) => (
-                <div key={name} className="flex flex-col gap-3 rounded-2xl bg-slate-50 p-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-900">{name}</p>
-                    <p className="text-sm text-slate-500">{book}</p>
+              {antrian.rows.length === 0 ? (
+                <EmptyState title="Antrian kosong" description="Tidak ada pengajuan yang menunggu konfirmasi." />
+              ) : (
+                antrian.rows.map((l) => (
+                  <div key={l.id} className="rounded-2xl bg-slate-50 px-4 py-3">
+                    <p className="font-semibold text-slate-900">{l.nama_lengkap}</p>
+                    <p className="text-sm text-slate-500">{l.judul} · diajukan {formatTanggal(l.tanggal)}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <StatusBadge tone="info">{status}</StatusBadge>
-                    <button className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white">Approve</button>
-                    <button className="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white">Reject</button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
-          <EmptyState
-            title="Pengembalian dan denda"
-            description="Panel ini bisa dipakai untuk proses retur buku dan pencatatan denda saat backend dihubungkan nanti."
-            action={<Link href="/dashboard/buku" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-sky-700">Buka katalog buku</Link>}
-          />
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Peminjaman Terlambat</h2>
+                <p className="mt-1 text-sm text-slate-500">Buku yang melewati batas pengembalian.</p>
+              </div>
+              <StatusBadge tone="danger">{r.terlambat} terlambat</StatusBadge>
+            </div>
+            <div className="mt-6 space-y-3">
+              {terlambat.rows.length === 0 ? (
+                <EmptyState title="Tidak ada keterlambatan" description="Semua peminjaman aktif masih dalam batas waktu." />
+              ) : (
+                terlambat.rows.map((l) => (
+                  <div key={l.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900">{l.nama_lengkap}</p>
+                      <p className="truncate text-sm text-slate-500">{l.judul} · jatuh tempo {formatTanggal(l.jatuh_tempo)}</p>
+                    </div>
+                    <StatusBadge tone="danger">{l.hari_terlambat} hari</StatusBadge>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </section>
       </div>
     </DashboardShell>

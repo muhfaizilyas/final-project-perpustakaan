@@ -20,6 +20,13 @@ const statusClasses = {
   tertunda: toneClasses.warning,
   draft: toneClasses.neutral,
   ditolak: toneClasses.danger,
+  "sedang dipinjam": toneClasses.info,
+  "perpanjangan diajukan": toneClasses.warning,
+  "perpanjangan disetujui": toneClasses.success,
+  "perpanjangan ditolak": toneClasses.danger,
+  tertunggak: toneClasses.danger,
+  lunas: toneClasses.success,
+  terlambat: toneClasses.danger,
   "stok habis": toneClasses.danger,
 };
 
@@ -31,7 +38,7 @@ export default function StatusBadge({ status, tone, children, className = "" }) 
 
   return (
     <span
-      className={`inline-flex max-w-full items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${appearance} ${className}`}
+      className={`inline-flex max-w-full items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ring-1 ${appearance} ${className}`}
     >
       {label}
     </span>
