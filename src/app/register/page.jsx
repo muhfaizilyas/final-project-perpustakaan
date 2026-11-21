@@ -63,6 +63,11 @@ export default async function RegisterPage() {
                 Login di sini
               </Link>
             </p>
+            <p className="mt-2 text-center text-sm text-slate-500">
+              <Link href="/" className="font-semibold text-slate-600 hover:text-slate-900">
+                Lanjutkan sebagai Guest
+              </Link>
+            </p>
           </div>
         </section>
       </div>

@@ -6,6 +6,8 @@ import DashboardShell from "@/components/DashboardShell";
 import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
+import AksiForm from "@/components/AksiForm";
+import { setujuiPinjam, tolakPinjam } from "@/actions/loan";
 
 export const metadata = { title: "Dashboard Pegawai" };
 
@@ -78,7 +80,7 @@ export default async function PegawaiDashboardPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">Antrian Pengajuan</h2>
-                <p className="mt-1 text-sm text-slate-500">Pengajuan pinjam tertua yang belum diproses.</p>
+                <p className="mt-1 text-sm text-slate-500">Pengajuan pinjam tertua yang belum diproses. Setujui atau tolak langsung dari sini.</p>
               </div>
               <Link href="/dashboard/transaksi?tab=antrean">
                 <StatusBadge tone="warning">{r.menunggu} menunggu · proses &rarr;</StatusBadge>
@@ -89,9 +91,15 @@ export default async function PegawaiDashboardPage() {
                 <EmptyState title="Antrian kosong" description="Tidak ada pengajuan yang menunggu konfirmasi." />
               ) : (
                 antrian.rows.map((l) => (
-                  <div key={l.id} className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="font-semibold text-slate-900">{l.nama_lengkap}</p>
-                    <p className="text-sm text-slate-500">{l.judul} · diajukan {formatTanggal(l.tanggal)}</p>
+                  <div key={l.id} className="space-y-3 rounded-2xl bg-slate-50 px-4 py-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{l.nama_lengkap}</p>
+                      <p className="text-sm text-slate-500">{l.judul} · diajukan {formatTanggal(l.tanggal)}</p>
+                    </div>
+                    <div className="flex flex-wrap items-start gap-2">
+                      <AksiForm action={setujuiPinjam} id={l.id} label="Setujui" variant="success" />
+                      <AksiForm action={tolakPinjam} id={l.id} label="Tolak" variant="danger" alasan alasanPlaceholder="Alasan penolakan" />
+                    </div>
                   </div>
                 ))
               )}
