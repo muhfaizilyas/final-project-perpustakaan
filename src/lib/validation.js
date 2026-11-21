@@ -43,3 +43,20 @@ export function validateRegister({
 
   return errors;
 }
+
+export function validateKategori({ nama, kode, deskripsi }) {
+  const errors = {};
+
+  if (!nama) errors.nama = "Nama kategori wajib diisi.";
+  else if (nama.length < 3) errors.nama = "Nama minimal 3 karakter.";
+  else if (nama.length > 100) errors.nama = "Nama maksimal 100 karakter.";
+
+  if (!kode) errors.kode = "Kode kategori wajib diisi.";
+  else if (!/^[A-Z0-9]{2,20}$/.test(kode))
+    errors.kode = "Kode 2-20 karakter, hanya huruf dan angka (contoh: TI).";
+
+  if (deskripsi && deskripsi.length > 500)
+    errors.deskripsi = "Deskripsi maksimal 500 karakter.";
+
+  return errors;
+}
