@@ -1,7 +1,7 @@
 import Link from "next/link";
 import pool from "@/lib/db";
 import { requireRole } from "@/lib/auth";
-import { formatTanggal } from "@/lib/format";
+import { formatTanggal, formatRupiah } from "@/lib/format";
 import DashboardShell from "@/components/DashboardShell";
 import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
@@ -18,9 +18,12 @@ export default async function AdminDashboardPage() {
     pool.query(`
       SELECT
         (SELECT COUNT(*)::int FROM users WHERE role = 'mahasiswa' AND is_active) AS mahasiswa,
-        (SELECT COUNT(*)::int FROM users WHERE role = 'pegawai'   AND is_active) AS pegawai,
         (SELECT COUNT(*)::int FROM books)      AS buku,
-        (SELECT COUNT(*)::int FROM categories) AS kategori`),
+        (SELECT COALESCE(SUM(stok_total), 0)::int FROM books) AS eksemplar,
+        (SELECT COUNT(*)::int FROM loans
+          WHERE status_pinjam IN ('Menunggu Konfirmasi', 'Sedang Dipinjam')) AS transaksi_aktif,
+        (SELECT COALESCE(SUM(l.denda_nominal), 0) FROM loans l
+          WHERE l.status_denda = 'Lunas') AS denda_lunas`),
     pool.query(`
       SELECT l.id, u.nama_lengkap, b.judul, l.status_pinjam,
              l.tanggal_pengajuan::date::text AS tanggal
@@ -40,10 +43,11 @@ export default async function AdminDashboardPage() {
   const maks = Math.max(1, ...perKategori.rows.map((k) => k.jumlah));
 
   const stats = [
-    { label: "Mahasiswa Aktif", value: r.mahasiswa, note: "Akun mahasiswa terdaftar", tone: "sky" },
-    { label: "Pegawai", value: r.pegawai, note: "Akun staf perpustakaan", tone: "emerald" },
-    { label: "Total Buku", value: r.buku, note: "Judul di koleksi", tone: "amber" },
-    { label: "Kategori", value: r.kategori, note: "Master data buku", tone: "rose" },
+    { label: "Total Judul Buku", value: r.buku, note: "Judul di koleksi", tone: "amber" },
+    { label: "Total Eksemplar", value: r.eksemplar, note: "Jumlah stok seluruh buku", tone: "violet" },
+    { label: "Mahasiswa Terdaftar", value: r.mahasiswa, note: "Akun mahasiswa aktif", tone: "sky" },
+    { label: "Transaksi Aktif", value: r.transaksi_aktif, note: "Menunggu + sedang dipinjam", tone: "emerald" },
+    { label: "Denda Lunas", value: formatRupiah(r.denda_lunas), note: "Total denda yang sudah dibayar", tone: "rose" },
   ];
 
   return (
@@ -53,13 +57,14 @@ export default async function AdminDashboardPage() {
       subtitle="Ringkasan pengguna, koleksi, dan aktivitas peminjaman terbaru."
       actions={
         <>
+          <Link href="/dashboard/transaksi" className={tombol}>Monitoring Transaksi</Link>
           <Link href="/dashboard/buku" className={tombol}>Kelola Buku</Link>
           <Link href="/dashboard/admin/kategori" className={tombol}>Kelola Kategori</Link>
         </>
       }
     >
       <div className="space-y-8">
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {stats.map((item) => <MetricCard key={item.label} {...item} />)}
         </section>
 
