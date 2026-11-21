@@ -155,3 +155,46 @@ export function validatePengumuman({ judul, konten, kategori, tanggal_rilis, sta
 
   return errors;
 }
+
+// ---------------------------------------------------------------------
+// Manajemen user (khusus Admin)
+// ---------------------------------------------------------------------
+export const ROLE_USER = ["admin", "pegawai", "mahasiswa"];
+
+// Dipakai bersama oleh form tambah dan form edit.
+function validasiDataUser({ nama_lengkap, email, role, is_active }) {
+  const errors = {};
+
+  if (!nama_lengkap) errors.nama_lengkap = "Nama lengkap wajib diisi.";
+  else if (nama_lengkap.length < 3) errors.nama_lengkap = "Nama minimal 3 karakter.";
+  else if (nama_lengkap.length > 100) errors.nama_lengkap = "Nama maksimal 100 karakter.";
+
+  if (!email) errors.email = "Email wajib diisi.";
+  else if (!EMAIL_REGEX.test(email)) errors.email = "Format email tidak valid.";
+  else if (email.length > 100) errors.email = "Email maksimal 100 karakter.";
+
+  if (!ROLE_USER.includes(role)) errors.role = "Pilih role pengguna.";
+
+  if (is_active !== undefined && !["true", "false"].includes(is_active))
+    errors.is_active = "Pilih status akun.";
+
+  return errors;
+}
+
+export function validateUserBaru(v) {
+  const errors = validasiDataUser(v);
+
+  if (!v.nomor_identitas) errors.nomor_identitas = "Nomor identitas (NIM/NIP) wajib diisi.";
+  else if (!/^[A-Za-z0-9]{3,30}$/.test(v.nomor_identitas))
+    errors.nomor_identitas = "Nomor identitas 3-30 karakter, hanya huruf dan angka.";
+
+  if (!v.password) errors.password = "Password wajib diisi.";
+  else if (v.password.length < 8) errors.password = "Password minimal 8 karakter.";
+  else if (v.password.length > 72) errors.password = "Password maksimal 72 karakter.";
+
+  return errors;
+}
+
+export function validateUserEdit(v) {
+  return validasiDataUser(v);
+}

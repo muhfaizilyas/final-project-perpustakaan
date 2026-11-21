@@ -59,6 +59,7 @@ export default async function AdminDashboardPage() {
         <>
           <Link href="/dashboard/transaksi" className={tombol}>Monitoring Transaksi</Link>
           <Link href="/dashboard/buku" className={tombol}>Kelola Buku</Link>
+          <Link href="/dashboard/admin/user" className={tombol}>Kelola User</Link>
           <Link href="/dashboard/admin/kategori" className={tombol}>Kelola Kategori</Link>
           <Link href="/dashboard/pengumuman" className={tombol}>Kelola Pengumuman</Link>
         </>

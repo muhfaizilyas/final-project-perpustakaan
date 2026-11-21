@@ -31,7 +31,7 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - [x] Proteksi halaman berdasarkan role (dicek di server)
 - [x] Manajemen kategori (admin)
 - [x] Manajemen buku (admin & pegawai)
-- [ ] Manajemen user
+- [x] Manajemen user (admin): daftar + filter role, tambah, edit, hapus dengan proteksi
 - [x] Manajemen pengumuman (Draft / Published), daftar dan detail pengumuman publik
 - [x] Beranda (5 buku terpopuler, pengumuman terbaru, pencarian cepat)
 - [x] Katalog (filter kategori, urut tahun / rating) dan detail buku dengan ulasan
@@ -47,6 +47,7 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - Kategori dengan nama atau kode yang sama ditolak; kategori yang masih memiliki buku tidak dapat dihapus.
 - Stok buku berubah di dalam transaksi SQL (`BEGIN` / `COMMIT`) saat peminjaman disetujui atau buku dikembalikan.
 - Mahasiswa dengan denda berstatus *Tertunggak* tidak dapat mengajukan peminjaman baru.
+- User tidak dapat dihapus jika masih punya transaksi aktif atau denda tertunggak; admin tidak dapat menghapus atau mengubah role/status akunnya sendiri.
 
 ## Cara Menjalankan
 
@@ -117,7 +118,7 @@ Akun `andi@student.kampus.ac.id` (password `mahasiswa123`) sengaja memiliki dend
 ```
 database/          schema.sql dan seed.sql (di luar folder app)
 src/
-  actions/         Server Actions (auth, kategori, buku, loan, pengumuman)
+  actions/         Server Actions (auth, kategori, buku, loan, pengumuman, user)
   app/             halaman dan route (App Router)
     login/ register/
     katalog/ buku/[id]/ pengumuman/ pengumuman/[id]/   halaman publik
