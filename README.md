@@ -22,7 +22,7 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 | **Guest** | Melihat beranda, katalog, detail buku, dan pengumuman |
 | **Mahasiswa** | Mengajukan peminjaman dan perpanjangan, melihat riwayat dan denda, memberi ulasan |
 | **Pegawai Perpustakaan** | Mengelola buku, memproses peminjaman, pengembalian, dan perpanjangan |
-| **Admin** | Semua hak pegawai, ditambah manajemen user, kategori, dan pengumuman |
+| **Admin** | Kelola buku dan pengumuman, memantau seluruh transaksi (hanya lihat), ditambah manajemen user dan kategori |
 
 ## Fitur dan Progres
 
@@ -35,9 +35,9 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - [ ] Manajemen pengumuman (Draft / Published)
 - [x] Beranda (5 buku terpopuler, pengumuman terbaru, pencarian cepat)
 - [x] Katalog (filter kategori, urut tahun / rating) dan detail buku dengan ulasan
-- [ ] Alur peminjaman (pengajuan, persetujuan / penolakan, pengembalian)
-- [ ] Perpanjangan dan perhitungan denda
-- [ ] Ulasan dan rating buku
+- [x] Alur peminjaman (pengajuan, persetujuan / penolakan, pengembalian)
+- [x] Perpanjangan dan perhitungan denda
+- [x] Ulasan dan rating buku
 - [x] Dashboard ringkasan Mahasiswa, Pegawai, dan Admin (data dari database)
 
 ## Aturan Bisnis yang Diterapkan
@@ -117,11 +117,11 @@ Akun `andi@student.kampus.ac.id` (password `mahasiswa123`) sengaja memiliki dend
 ```
 database/          schema.sql dan seed.sql (di luar folder app)
 src/
-  actions/         Server Actions (auth, kategori, ...)
+  actions/         Server Actions (auth, kategori, buku, loan)
   app/             halaman dan route (App Router)
     login/ register/
     katalog/ buku/[id]/   halaman publik (katalog dan detail buku)
-    dashboard/     admin/ pegawai/ mahasiswa/ buku/
+    dashboard/     admin/ pegawai/ mahasiswa/ buku/ transaksi/
   components/      komponen UI (form, tombol, ...)
   lib/             db.js (pool PostgreSQL), session.js, auth.js, validation.js
 ```
