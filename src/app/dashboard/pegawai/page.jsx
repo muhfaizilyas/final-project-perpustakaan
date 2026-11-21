@@ -55,9 +55,14 @@ export default async function PegawaiDashboardPage() {
       title="Dashboard Pegawai"
       subtitle="Pantau pengajuan, peminjaman aktif, dan keterlambatan."
       actions={
-        <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
-          Kelola Buku
-        </Link>
+        <>
+          <Link href="/dashboard/transaksi" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
+            Proses Transaksi
+          </Link>
+          <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
+            Kelola Buku
+          </Link>
+        </>
       }
     >
       <div className="space-y-8">
@@ -72,7 +77,9 @@ export default async function PegawaiDashboardPage() {
                 <h2 className="text-lg font-bold text-slate-900">Antrian Pengajuan</h2>
                 <p className="mt-1 text-sm text-slate-500">Pengajuan pinjam tertua yang belum diproses.</p>
               </div>
-              <StatusBadge tone="warning">{r.menunggu} menunggu</StatusBadge>
+              <Link href="/dashboard/transaksi?tab=antrean">
+                <StatusBadge tone="warning">{r.menunggu} menunggu · proses &rarr;</StatusBadge>
+              </Link>
             </div>
             <div className="mt-6 space-y-3">
               {antrian.rows.length === 0 ? (
@@ -94,7 +101,9 @@ export default async function PegawaiDashboardPage() {
                 <h2 className="text-lg font-bold text-slate-900">Peminjaman Terlambat</h2>
                 <p className="mt-1 text-sm text-slate-500">Buku yang melewati batas pengembalian.</p>
               </div>
-              <StatusBadge tone="danger">{r.terlambat} terlambat</StatusBadge>
+              <Link href="/dashboard/transaksi?tab=dipinjam">
+                <StatusBadge tone="danger">{r.terlambat} terlambat · kelola &rarr;</StatusBadge>
+              </Link>
             </div>
             <div className="mt-6 space-y-3">
               {terlambat.rows.length === 0 ? (
