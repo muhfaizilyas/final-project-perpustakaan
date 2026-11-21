@@ -60,3 +60,52 @@ export function validateKategori({ nama, kode, deskripsi }) {
 
   return errors;
 }
+
+// Semua nilai masuk sebagai string (dari form). Konversi angka dilakukan di action.
+export function validateBuku(v) {
+  const errors = {};
+  const tahunMaks = new Date().getFullYear();
+
+  if (!v.judul) errors.judul = "Judul wajib diisi.";
+  else if (v.judul.length > 200) errors.judul = "Judul maksimal 200 karakter.";
+
+  const isbnAngka = v.isbn.replace(/[-\s]/g, "");
+  if (!v.isbn) errors.isbn = "ISBN wajib diisi.";
+  else if (!/^(\d{10}|\d{13})$/.test(isbnAngka))
+    errors.isbn = "ISBN harus 10 atau 13 digit angka (tanda hubung boleh).";
+  else if (v.isbn.length > 20) errors.isbn = "ISBN maksimal 20 karakter.";
+
+  if (!v.pengarang) errors.pengarang = "Pengarang wajib diisi.";
+  else if (v.pengarang.length > 150) errors.pengarang = "Pengarang maksimal 150 karakter.";
+
+  if (!v.penerbit) errors.penerbit = "Penerbit wajib diisi.";
+  else if (v.penerbit.length > 150) errors.penerbit = "Penerbit maksimal 150 karakter.";
+
+  if (!/^\d+$/.test(v.tahun_terbit))
+    errors.tahun_terbit = "Tahun terbit harus berupa angka.";
+  else if (Number(v.tahun_terbit) < 1000 || Number(v.tahun_terbit) > tahunMaks)
+    errors.tahun_terbit = `Tahun terbit harus antara 1000 dan ${tahunMaks}.`;
+
+  if (!/^\d+$/.test(v.category_id)) errors.category_id = "Pilih kategori.";
+
+  if (!/^-?\d+$/.test(v.stok_total)) errors.stok_total = "Stok total harus berupa angka.";
+  else if (Number(v.stok_total) < 0) errors.stok_total = "Stok total tidak boleh negatif.";
+  else if (Number(v.stok_total) > 100000) errors.stok_total = "Stok total terlalu besar.";
+
+  if (!/^\d+$/.test(v.durasi_maks_pinjam))
+    errors.durasi_maks_pinjam = "Durasi harus berupa angka (hari).";
+  else if (Number(v.durasi_maks_pinjam) < 1 || Number(v.durasi_maks_pinjam) > 365)
+    errors.durasi_maks_pinjam = "Durasi harus antara 1 dan 365 hari.";
+
+  if (!/^-?\d+$/.test(v.denda_per_hari)) errors.denda_per_hari = "Denda harus berupa angka.";
+  else if (Number(v.denda_per_hari) < 0) errors.denda_per_hari = "Denda tidak boleh negatif.";
+  else if (Number(v.denda_per_hari) > 100000000) errors.denda_per_hari = "Denda terlalu besar.";
+
+  if (v.cover_url) {
+    if (!/^https?:\/\/\S+$/i.test(v.cover_url))
+      errors.cover_url = "URL cover harus diawali http:// atau https://.";
+    else if (v.cover_url.length > 500) errors.cover_url = "URL cover terlalu panjang.";
+  }
+
+  return errors;
+}

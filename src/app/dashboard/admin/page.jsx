@@ -21,6 +21,13 @@ export default async function DashboardAdmin() {
           <p className="font-semibold">Kategori</p>
           <p className="text-sm text-slate-500">Kelola kategori buku</p>
         </Link>
+        <Link
+          href="/dashboard/buku"
+          className="rounded-xl bg-white p-4 ring-1 ring-slate-200 hover:ring-indigo-400"
+        >
+          <p className="font-semibold">Buku</p>
+          <p className="text-sm text-slate-500">Kelola koleksi buku dan stok</p>
+        </Link>
       </nav>
     </main>
   );
