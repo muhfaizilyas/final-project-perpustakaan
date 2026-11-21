@@ -6,13 +6,21 @@ import DashboardShell from "@/components/DashboardShell";
 import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
+import AksiForm from "@/components/AksiForm";
+import { ajukanPerpanjangan } from "@/actions/loan";
 
 export const metadata = { title: "Dashboard Mahasiswa" };
 
-export default async function MahasiswaDashboardPage() {
-  const user = await requireRole("mahasiswa");
+const PESAN = {
+  diajukan: "Pengajuan peminjaman terkirim. Tunggu konfirmasi pegawai di meja sirkulasi.",
+  ulasan: "Terima kasih, ulasanmu sudah tersimpan.",
+};
 
-  const [ringkasan, dipinjam, aktivitas] = await Promise.all([
+export default async function MahasiswaDashboardPage({ searchParams }) {
+  const user = await requireRole("mahasiswa");
+  const { status } = await searchParams;
+
+  const [ringkasan, dipinjam, aktivitas, riwayat] = await Promise.all([
     pool.query(
       `SELECT
          COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam')::int      AS dipinjam,
@@ -26,7 +34,8 @@ export default async function MahasiswaDashboardPage() {
       `SELECT l.id, b.judul, b.pengarang, c.nama AS kategori,
               l.tanggal_jatuh_tempo::text AS jatuh_tempo,
               (l.tanggal_jatuh_tempo - CURRENT_DATE)::int AS sisa_hari,
-              l.status_perpanjangan
+              l.status_perpanjangan,
+              GREATEST(CURRENT_DATE - l.tanggal_jatuh_tempo, 0) * b.denda_per_hari AS estimasi_denda
          FROM loans l
          JOIN books b ON b.id = l.book_id
          JOIN categories c ON c.id = b.category_id
@@ -40,6 +49,19 @@ export default async function MahasiswaDashboardPage() {
         WHERE l.user_id = $1
         ORDER BY l.tanggal_pengajuan DESC, l.id DESC
         LIMIT 5`,
+      [user.id]
+    ),
+    pool.query(
+      `SELECT l.id, b.judul, l.status_pinjam, l.status_denda, l.denda_nominal,
+              l.tanggal_pengajuan::date::text AS diajukan,
+              l.tanggal_kembali::text AS kembali,
+              l.alasan_penolakan,
+              r.id AS review_id
+         FROM loans l
+         JOIN books b ON b.id = l.book_id
+         LEFT JOIN reviews r ON r.loan_id = l.id
+        WHERE l.user_id = $1
+        ORDER BY l.tanggal_pengajuan DESC, l.id DESC`,
       [user.id]
     ),
   ]);
@@ -65,6 +87,11 @@ export default async function MahasiswaDashboardPage() {
       }
     >
       <div className="space-y-8">
+        {PESAN[status] ? (
+          <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {PESAN[status]}
+          </p>
+        ) : null}
         {diblokir ? (
           <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
             Kamu punya denda tertunggak sebesar <strong>{formatRupiah(r.denda)}</strong>.
@@ -106,6 +133,16 @@ export default async function MahasiswaDashboardPage() {
                       {b.status_perpanjangan ? <StatusBadge status={b.status_perpanjangan} /> : null}
                     </div>
                     <p className="mt-3 text-xs text-slate-500">Jatuh tempo {formatTanggal(b.jatuh_tempo)}</p>
+                    {b.sisa_hari < 0 ? (
+                      <p className="mt-1 text-xs font-semibold text-rose-600">
+                        Estimasi denda berjalan {formatRupiah(b.estimasi_denda)}
+                      </p>
+                    ) : null}
+                    {b.status_perpanjangan !== "Perpanjangan Diajukan" ? (
+                      <div className="mt-4">
+                        <AksiForm action={ajukanPerpanjangan} id={b.id} label="Ajukan Perpanjangan" variant="neutral" />
+                      </div>
+                    ) : null}
                   </article>
                 ))}
               </div>
@@ -130,6 +167,64 @@ export default async function MahasiswaDashboardPage() {
                 ))
               )}
             </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold text-slate-900">Riwayat Transaksi</h2>
+          <p className="mt-1 text-sm text-slate-500">Semua pengajuan, peminjaman, dan denda kamu.</p>
+          <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full min-w-[44rem] text-left text-sm">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Buku</th>
+                  <th className="px-5 py-3 font-semibold">Diajukan</th>
+                  <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold">Denda</th>
+                  <th className="px-5 py-3 font-semibold">Ulasan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {riwayat.rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-slate-500">Belum ada transaksi.</td>
+                  </tr>
+                ) : null}
+                {riwayat.rows.map((l) => (
+                  <tr key={l.id} className="align-top">
+                    <td className="px-5 py-4 font-semibold text-slate-900">{l.judul}</td>
+                    <td className="px-5 py-4 text-slate-600">{formatTanggal(l.diajukan)}</td>
+                    <td className="px-5 py-4">
+                      <StatusBadge status={l.status_pinjam} />
+                      {l.status_pinjam === "Ditolak" && l.alasan_penolakan ? (
+                        <p className="mt-1 max-w-xs text-xs text-slate-500">Alasan: {l.alasan_penolakan}</p>
+                      ) : null}
+                    </td>
+                    <td className="px-5 py-4">
+                      {l.status_denda === "Tidak Ada" ? (
+                        <span className="text-slate-400">-</span>
+                      ) : (
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="font-medium text-slate-800">{formatRupiah(l.denda_nominal)}</span>
+                          <StatusBadge status={l.status_denda} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {l.status_pinjam !== "Selesai" ? (
+                        <span className="text-slate-400">-</span>
+                      ) : l.review_id ? (
+                        <StatusBadge tone="success">Sudah diulas</StatusBadge>
+                      ) : (
+                        <Link href={`/dashboard/mahasiswa/ulasan/${l.id}`} className="font-semibold text-sky-600 hover:text-sky-700">
+                          Tulis ulasan
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
