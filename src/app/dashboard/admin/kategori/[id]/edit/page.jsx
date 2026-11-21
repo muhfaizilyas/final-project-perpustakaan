@@ -8,7 +8,7 @@ import DashboardShell from "@/components/DashboardShell";
 export const metadata = { title: "Edit Kategori - Admin" };
 
 export default async function EditKategoriPage({ params }) {
-  await requireRole("admin");
+  const user = await requireRole("admin");
 
   const { id } = await params;
   const kategoriId = Number(id);
@@ -21,8 +21,8 @@ export default async function EditKategoriPage({ params }) {
   if (rows.length === 0) notFound();
 
   return (
-    <DashboardShell role="admin" title="Edit Kategori" subtitle="Perbarui informasi kategori buku.">
-      <main className="mx-auto max-w-xl py-4">
+    <DashboardShell user={user} title="Edit Kategori" subtitle="Perbarui informasi kategori buku.">
+      <div className="mx-auto max-w-xl py-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <KategoriForm
             action={updateKategori.bind(null, kategoriId)}
@@ -30,7 +30,7 @@ export default async function EditKategoriPage({ params }) {
             submitLabel="Simpan Perubahan"
           />
         </div>
-      </main>
+      </div>
     </DashboardShell>
   );
 }

@@ -6,15 +6,15 @@ import DashboardShell from "@/components/DashboardShell";
 export const metadata = { title: "Tambah Kategori - Admin" };
 
 export default async function KategoriBaruPage() {
-  await requireRole("admin");
+  const user = await requireRole("admin");
 
   return (
-    <DashboardShell role="admin" title="Tambah Kategori" subtitle="Tambahkan kategori baru ke koleksi perpustakaan.">
-      <main className="mx-auto max-w-xl py-4">
+    <DashboardShell user={user} title="Tambah Kategori" subtitle="Tambahkan kategori baru ke koleksi perpustakaan.">
+      <div className="mx-auto max-w-xl py-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <KategoriForm action={createKategori} submitLabel="Simpan" />
         </div>
-      </main>
+      </div>
     </DashboardShell>
   );
 }
