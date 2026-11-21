@@ -13,9 +13,9 @@ const stats = [
 ];
 
 const books = [
-  { title: "Clean Code", author: "Robert C. Martin", category: "Teknologi Informasi", status: "Tersedia", rating: "4.9" },
-  { title: "Atomic Habits", author: "James Clear", category: "Pengembangan Diri", status: "Dipinjam", rating: "4.8" },
-  { title: "Algoritma & Struktur Data", author: "Andi Pratama", category: "Teknik Informatika", status: "Tersedia", rating: "4.7" },
+  { title: "Clean Code", author: "Robert C. Martin", category: "Teknologi Informasi", status: "Tersedia", stock: 12, rating: "4.9" },
+  { title: "Atomic Habits", author: "James Clear", category: "Pengembangan Diri", status: "Dipinjam", stock: 5, rating: "4.8" },
+  { title: "Algoritma & Struktur Data", author: "Andi Pratama", category: "Teknik Informatika", status: "Tersedia", stock: 8, rating: "4.7" },
 ];
 
 const announcements = [
@@ -32,7 +32,7 @@ export default function DashboardHomePage() {
       actions={(
         <>
           <StatusBadge tone="info">Demo UI</StatusBadge>
-          <Link href="/login" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <Link href="/login" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
             Login
           </Link>
         </>

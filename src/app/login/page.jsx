@@ -21,7 +21,7 @@ export default function LoginPage() {
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-white/60 bg-white/80 shadow-2xl shadow-slate-900/5 backdrop-blur xl:grid-cols-[1.05fr_0.95fr]">
         <section className="flex flex-col justify-between bg-slate-950 p-8 text-white md:p-10 lg:p-12">
           <div>
-            <BrandMark />
+            <BrandMark variant="inverse" />
             <p className="mt-8 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
               Sistem Manajemen Perpustakaan
             </p>

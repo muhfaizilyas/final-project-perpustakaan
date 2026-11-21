@@ -2,6 +2,7 @@ import pool from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { createBuku } from "@/actions/buku";
 import BukuForm from "@/components/BukuForm";
+import DashboardShell from "@/components/DashboardShell";
 
 export const metadata = { title: "Tambah Buku" };
 
@@ -12,11 +13,12 @@ export default async function BukuBaruPage() {
   );
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Tambah Buku</h1>
-      <div className="rounded-2xl bg-white p-6 ring-1 ring-slate-200">
-        <BukuForm action={createBuku} categories={categories} submitLabel="Simpan" />
-      </div>
-    </main>
+    <DashboardShell role="admin" title="Tambah Buku" subtitle="Tambahkan koleksi buku baru ke perpustakaan.">
+      <main className="mx-auto max-w-2xl py-4">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <BukuForm action={createBuku} categories={categories} submitLabel="Simpan" />
+        </div>
+      </main>
+    </DashboardShell>
   );
 }

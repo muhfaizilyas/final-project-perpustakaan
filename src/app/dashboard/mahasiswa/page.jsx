@@ -12,9 +12,9 @@ const stats = [
 ];
 
 const books = [
-  { title: "Clean Code", author: "Robert C. Martin", category: "Teknologi Informasi", status: "Jatuh tempo 4 hari", rating: "4.9" },
-  { title: "Design Pattern", author: "Erich Gamma", category: "Teknik Informatika", status: "Jatuh tempo 8 hari", rating: "4.7" },
-  { title: "Atomic Habits", author: "James Clear", category: "Pengembangan Diri", status: "Jatuh tempo 2 hari", rating: "4.8" },
+  { title: "Clean Code", author: "Robert C. Martin", category: "Teknologi Informasi", status: "Jatuh tempo 4 hari", stock: 12, rating: "4.9" },
+  { title: "Design Pattern", author: "Erich Gamma", category: "Teknik Informatika", status: "Jatuh tempo 8 hari", stock: 8, rating: "4.7" },
+  { title: "Atomic Habits", author: "James Clear", category: "Pengembangan Diri", status: "Jatuh tempo 2 hari", stock: 5, rating: "4.8" },
 ];
 
 export default function MahasiswaDashboardPage() {
@@ -26,7 +26,7 @@ export default function MahasiswaDashboardPage() {
       actions={(
         <>
           <StatusBadge tone="success">Mahasiswa</StatusBadge>
-          <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
             Jelajahi Buku
           </Link>
         </>

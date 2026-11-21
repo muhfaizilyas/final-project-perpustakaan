@@ -20,7 +20,7 @@ export default function PegawaiDashboardPage() {
       actions={(
         <>
           <StatusBadge tone="success">Pegawai</StatusBadge>
-          <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
             Kelola Buku
           </Link>
         </>
@@ -64,7 +64,7 @@ export default function PegawaiDashboardPage() {
           <EmptyState
             title="Pengembalian dan denda"
             description="Panel ini bisa dipakai untuk proses retur buku dan pencatatan denda saat backend dihubungkan nanti."
-            action={<Link href="/dashboard/buku" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">Buka katalog buku</Link>}
+            action={<Link href="/dashboard/buku" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-sky-700">Buka katalog buku</Link>}
           />
         </section>
       </div>

@@ -20,7 +20,7 @@ export default function CategoryPage() {
       actions={(
         <>
           <StatusBadge tone="info">Master Data</StatusBadge>
-          <Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
             Tambah Kategori
           </Link>
         </>
@@ -60,7 +60,7 @@ export default function CategoryPage() {
         <EmptyState
           title="Panel detail kategori"
           description="Area ini bisa dipakai untuk form input, pencarian, dan statistik kategori di tahap berikutnya."
-          action={<Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">Buat kategori baru</Link>}
+          action={<Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-sky-700">Buat kategori baru</Link>}
         />
       </div>
     </DashboardShell>

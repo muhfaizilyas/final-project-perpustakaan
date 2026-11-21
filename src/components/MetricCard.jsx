@@ -1,16 +1,21 @@
-export default function MetricCard({ label, value, note, tone = "sky" }) {
-  const tones = {
-    sky: "from-sky-500/15 to-sky-500/5 text-sky-700",
-    emerald: "from-emerald-500/15 to-emerald-500/5 text-emerald-700",
-    amber: "from-amber-500/15 to-amber-500/5 text-amber-700",
-    rose: "from-rose-500/15 to-rose-500/5 text-rose-700",
-  };
+const tones = {
+  blue: "from-blue-600 to-cyan-500",
+  sky: "from-sky-600 to-cyan-500",
+  emerald: "from-emerald-600 to-teal-500",
+  amber: "from-amber-500 to-orange-500",
+  rose: "from-rose-600 to-pink-500",
+  violet: "from-violet-600 to-fuchsia-500",
+};
 
+export default function MetricCard({ label, value, description, note, tone = "blue" }) {
   return (
-    <div className={`rounded-3xl border border-slate-200 bg-gradient-to-br ${tones[tone] ?? tones.sky} p-5 shadow-sm`}>
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <div className="mt-3 text-3xl font-black tracking-tight text-slate-900">{value}</div>
-      <p className="mt-2 text-sm text-slate-500">{note}</p>
-    </div>
+    <article className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/90 p-5 shadow-sm shadow-slate-200/60 backdrop-blur">
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${tones[tone] ?? tones.blue}`} />
+      <p className="text-sm font-medium text-slate-500">{label ?? "Statistik"}</p>
+      <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900">{value ?? "—"}</p>
+      {(description ?? note) ? (
+        <p className="mt-2 text-sm text-slate-600">{description ?? note}</p>
+      ) : null}
+    </article>
   );
 }

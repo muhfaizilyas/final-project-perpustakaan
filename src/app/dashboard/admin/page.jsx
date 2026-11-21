@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
       actions={(
         <>
           <StatusBadge tone="warning">Admin Panel</StatusBadge>
-          <Link href="/dashboard/admin/kategori" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+          <Link href="/dashboard/admin/kategori" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
             Kelola Kategori
           </Link>
         </>
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
           <EmptyState
             title="Ruang statistik tambahan"
             description="Area ini bisa dipakai untuk chart, laporan, atau ringkasan data ketika backend kamu sudah berkembang."
-            action={<Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">Tambah Kategori</Link>}
+            action={<Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-sky-700">Tambah Kategori</Link>}
           />
         </section>
       </div>

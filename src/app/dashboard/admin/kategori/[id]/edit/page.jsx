@@ -3,6 +3,7 @@ import pool from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { updateKategori } from "@/actions/kategori";
 import KategoriForm from "@/components/KategoriForm";
+import DashboardShell from "@/components/DashboardShell";
 
 export const metadata = { title: "Edit Kategori - Admin" };
 
@@ -20,15 +21,16 @@ export default async function EditKategoriPage({ params }) {
   if (rows.length === 0) notFound();
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Edit Kategori</h1>
-      <div className="rounded-2xl bg-white p-6 ring-1 ring-slate-200">
-        <KategoriForm
-          action={updateKategori.bind(null, kategoriId)}
-          initial={rows[0]}
-          submitLabel="Simpan Perubahan"
-        />
-      </div>
-    </main>
+    <DashboardShell role="admin" title="Edit Kategori" subtitle="Perbarui informasi kategori buku.">
+      <main className="mx-auto max-w-xl py-4">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <KategoriForm
+            action={updateKategori.bind(null, kategoriId)}
+            initial={rows[0]}
+            submitLabel="Simpan Perubahan"
+          />
+        </div>
+      </main>
+    </DashboardShell>
   );
 }
