@@ -1,142 +1,54 @@
 import Link from "next/link";
-import pool from "@/lib/db";
-import { requireRole, dashboardPath } from "@/lib/auth";
-import HapusBukuButton from "@/components/HapusBukuButton";
+import DashboardShell from "@/components/DashboardShell";
+import BookCard from "@/components/BookCard";
+import FilterBar from "@/components/FilterBar";
+import StatusBadge from "@/components/StatusBadge";
 
-export const metadata = { title: "Manajemen Buku" };
+const books = [
+  { title: "Clean Code", author: "Robert C. Martin", category: "Teknologi Informasi", status: "Tersedia", rating: "4.9" },
+  { title: "Atomic Habits", author: "James Clear", category: "Pengembangan Diri", status: "Dipinjam", rating: "4.8" },
+  { title: "Laskar Pelangi", author: "Andrea Hirata", category: "Sastra", status: "Tersedia", rating: "4.7" },
+  { title: "Algoritma & Struktur Data", author: "Andi Pratama", category: "Teknik Informatika", status: "Tersedia", rating: "4.6" },
+  { title: "Database System Concepts", author: "Silberschatz", category: "Basis Data", status: "Tersedia", rating: "4.9" },
+  { title: "Matematika Diskrit", author: "Kenneth Rosen", category: "Matematika", status: "Dipinjam", rating: "4.5" },
+];
 
-const PESAN = {
-  dibuat: "Buku berhasil ditambahkan.",
-  diubah: "Buku berhasil diperbarui.",
-  dihapus: "Buku berhasil dihapus.",
-};
-
-export default async function BukuPage({ searchParams }) {
-  const user = await requireRole("admin", "pegawai");
-  const { status, q = "", kategori = "" } = await searchParams;
-
-  const kategoriId = /^\d+$/.test(kategori) ? Number(kategori) : null;
-  const keyword = String(q).trim();
-
-  const [{ rows: buku }, { rows: daftarKategori }] = await Promise.all([
-    pool.query(
-      `SELECT b.id, b.judul, b.isbn, b.pengarang, b.tahun_terbit,
-              b.stok_total, b.stok_tersedia, c.nama AS kategori
-         FROM books b
-         JOIN categories c ON c.id = b.category_id
-        WHERE ($1 = ''
-               OR b.judul     ILIKE '%' || $1 || '%'
-               OR b.pengarang ILIKE '%' || $1 || '%'
-               OR b.isbn      ILIKE '%' || $1 || '%')
-          AND ($2::int IS NULL OR b.category_id = $2::int)
-        ORDER BY b.judul`,
-      [keyword, kategoriId]
-    ),
-    pool.query("SELECT id, nama FROM categories ORDER BY nama"),
-  ]);
-
+export default function BukuCatalogPage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
-      <Link href={dashboardPath(user.role)} className="text-sm text-slate-500 hover:underline">
-        &larr; Dashboard
-      </Link>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Manajemen Buku</h1>
-        <Link
-          href="/dashboard/buku/baru"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          + Tambah Buku
-        </Link>
-      </div>
-
-      {PESAN[status] && (
-        <p role="status" className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-          {PESAN[status]}
-        </p>
-      )}
-
-      {/* Form GET biasa: hasil pencarian tercermin di URL (?q=...&kategori=...) */}
-      <form method="GET" className="mt-6 flex flex-wrap gap-3">
-        <input
-          type="search"
-          name="q"
-          defaultValue={keyword}
-          placeholder="Cari judul, pengarang, atau ISBN"
-          className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <select
-          name="kategori"
-          defaultValue={kategoriId ?? ""}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-        >
-          <option value="">Semua kategori</option>
-          {daftarKategori.map((c) => (
-            <option key={c.id} value={c.id}>{c.nama}</option>
-          ))}
-        </select>
-        <button type="submit" className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm hover:bg-slate-100">
-          Cari
-        </button>
-        {(keyword || kategoriId) && (
-          <Link href="/dashboard/buku" className="px-2 py-2 text-sm text-slate-500 hover:underline">
-            Reset
+    <DashboardShell
+      role="umum"
+      title="Katalog Buku"
+      subtitle="Tampilan katalog yang lebih modern untuk browsing, filter, dan detail buku."
+      actions={(
+        <>
+          <StatusBadge tone="info">Katalog</StatusBadge>
+          <Link href="/login" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+            Ajukan Pinjam
           </Link>
-        )}
-      </form>
+        </>
+      )}
+    >
+      <div className="space-y-8">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Cari buku</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900">Jelajahi koleksi perpustakaan</h2>
+              <p className="mt-2 text-sm text-slate-500">Gunakan pencarian dan filter untuk menemukan buku lebih cepat.</p>
+            </div>
+            <div className="rounded-3xl bg-slate-50 p-3">
+              <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-sky-400" placeholder="Cari judul, penulis, atau kategori..." />
+            </div>
+          </div>
+          <div className="mt-5">
+            <FilterBar filters={["Semua", "Teknologi", "Sastra", "Matematika", "Bisnis", "Pemrograman"]} />
+          </div>
+        </section>
 
-      <div className="mt-4 overflow-x-auto rounded-xl bg-white ring-1 ring-slate-200">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Judul</th>
-              <th className="px-4 py-3 font-medium">Pengarang</th>
-              <th className="px-4 py-3 font-medium">Kategori</th>
-              <th className="px-4 py-3 font-medium">Tahun</th>
-              <th className="px-4 py-3 font-medium">Stok</th>
-              <th className="px-4 py-3 font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {buku.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                  Tidak ada buku yang cocok.
-                </td>
-              </tr>
-            )}
-            {buku.map((b) => (
-              <tr key={b.id} className="align-top">
-                <td className="px-4 py-3">
-                  <p className="font-medium">{b.judul}</p>
-                  <p className="font-mono text-xs text-slate-500">{b.isbn}</p>
-                </td>
-                <td className="px-4 py-3">{b.pengarang}</td>
-                <td className="px-4 py-3">{b.kategori}</td>
-                <td className="px-4 py-3">{b.tahun_terbit}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      b.stok_tersedia > 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {b.stok_tersedia} / {b.stok_total}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3">
-                    <Link href={`/dashboard/buku/${b.id}/edit`} className="text-sm text-indigo-600 hover:underline">
-                      Edit
-                    </Link>
-                    <HapusBukuButton id={b.id} judul={b.judul} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {books.map((book) => <BookCard key={book.title} {...book} />)}
+        </section>
       </div>
-      <p className="mt-2 text-xs text-slate-500">Stok: tersedia / total.</p>
-    </main>
+    </DashboardShell>
   );
 }

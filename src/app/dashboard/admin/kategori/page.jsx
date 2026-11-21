@@ -1,91 +1,68 @@
 import Link from "next/link";
-import pool from "@/lib/db";
-import { requireRole } from "@/lib/auth";
-import HapusKategoriButton from "@/components/HapusKategoriButton";
+import DashboardShell from "@/components/DashboardShell";
+import StatusBadge from "@/components/StatusBadge";
+import EmptyState from "@/components/EmptyState";
 
-export const metadata = { title: "Kategori - Admin" };
+const categories = [
+  ["Teknologi Informasi", "TI-01", "Aktif"],
+  ["Sastra", "SA-02", "Aktif"],
+  ["Matematika", "MT-03", "Aktif"],
+  ["Bisnis", "BS-04", "Aktif"],
+  ["Ilmu Sosial", "IS-05", "Draft"],
+];
 
-const PESAN = {
-  dibuat: "Kategori berhasil ditambahkan.",
-  diubah: "Kategori berhasil diperbarui.",
-  dihapus: "Kategori berhasil dihapus.",
-};
-
-export default async function KategoriPage({ searchParams }) {
-  await requireRole("admin");
-  const { status } = await searchParams;
-
-  // LEFT JOIN + COUNT: kategori tanpa buku tetap muncul dengan jumlah 0
-  const { rows: kategori } = await pool.query(
-    `SELECT c.id, c.nama, c.kode, c.deskripsi, COUNT(b.id)::int AS jumlah_buku
-       FROM categories c
-       LEFT JOIN books b ON b.category_id = c.id
-      GROUP BY c.id
-      ORDER BY c.nama`
-  );
-
+export default function CategoryPage() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <Link href="/dashboard/admin" className="text-sm text-slate-500 hover:underline">
-        &larr; Dashboard
-      </Link>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Manajemen Kategori</h1>
-        <Link
-          href="/dashboard/admin/kategori/baru"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          + Tambah Kategori
-        </Link>
-      </div>
-
-      {PESAN[status] && (
-        <p role="status" className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-          {PESAN[status]}
-        </p>
+    <DashboardShell
+      role="admin"
+      title="Kategori Buku"
+      subtitle="UI daftar kategori yang bersih dan siap dihubungkan dengan backend kategori."
+      actions={(
+        <>
+          <StatusBadge tone="info">Master Data</StatusBadge>
+          <Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+            Tambah Kategori
+          </Link>
+        </>
       )}
+    >
+      <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Nama Kategori</th>
+                  <th className="px-4 py-3 font-semibold">Kode</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
+                {categories.map(([name, code, status]) => (
+                  <tr key={name}>
+                    <td className="px-4 py-3 font-medium text-slate-900">{name}</td>
+                    <td className="px-4 py-3">{code}</td>
+                    <td className="px-4 py-3"><StatusBadge tone={status === "Aktif" ? "success" : "warning"}>{status}</StatusBadge></td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button className="rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white">Edit</button>
+                        <button className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white">Hapus</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <div className="mt-6 overflow-x-auto rounded-xl bg-white ring-1 ring-slate-200">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Kode</th>
-              <th className="px-4 py-3 font-medium">Nama</th>
-              <th className="px-4 py-3 font-medium">Deskripsi</th>
-              <th className="px-4 py-3 font-medium">Jumlah Buku</th>
-              <th className="px-4 py-3 font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {kategori.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
-                  Belum ada kategori.
-                </td>
-              </tr>
-            )}
-            {kategori.map((k) => (
-              <tr key={k.id} className="align-top">
-                <td className="px-4 py-3 font-mono">{k.kode}</td>
-                <td className="px-4 py-3 font-medium">{k.nama}</td>
-                <td className="px-4 py-3 text-slate-600">{k.deskripsi ?? "-"}</td>
-                <td className="px-4 py-3">{k.jumlah_buku}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3">
-                    <Link
-                      href={`/dashboard/admin/kategori/${k.id}/edit`}
-                      className="text-sm text-indigo-600 hover:underline"
-                    >
-                      Edit
-                    </Link>
-                    <HapusKategoriButton id={k.id} nama={k.nama} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <EmptyState
+          title="Panel detail kategori"
+          description="Area ini bisa dipakai untuk form input, pencarian, dan statistik kategori di tahap berikutnya."
+          action={<Link href="/dashboard/admin/kategori/baru" className="rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">Buat kategori baru</Link>}
+        />
       </div>
-    </main>
+    </DashboardShell>
   );
 }
