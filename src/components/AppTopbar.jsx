@@ -1,39 +1,16 @@
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
+import { NAV, ROLE_LABEL } from "@/lib/navigation";
 
-const navigation = {
-  umum: [
-    { href: "/dashboard", label: "Ringkasan" },
-    { href: "/dashboard/buku", label: "Katalog Buku" },
-  ],
-  admin: [
-    { href: "/dashboard/admin", label: "Dashboard Admin" },
-    { href: "/dashboard/buku", label: "Manajemen Buku" },
-    { href: "/dashboard/admin/kategori", label: "Kategori Buku" },
-  ],
-  pegawai: [
-    { href: "/dashboard/pegawai", label: "Dashboard Pegawai" },
-    { href: "/dashboard/buku", label: "Manajemen Buku" },
-  ],
-  mahasiswa: [
-    { href: "/dashboard/mahasiswa", label: "Dashboard Mahasiswa" },
-    { href: "/dashboard/buku", label: "Jelajahi Buku" },
-  ],
-};
-
-export default function AppTopbar({ title, subtitle, actions, role = "umum" }) {
-  const roleLabel = {
-    umum: "Pengunjung",
-    admin: "Administrator",
-    pegawai: "Pegawai",
-    mahasiswa: "Mahasiswa",
-  }[role] ?? "Pengguna";
-  const items = navigation[role] ?? navigation.umum;
+export default function AppTopbar({ user, title, subtitle, actions }) {
+  const items = NAV[user.role] ?? [];
+  const inisial = user.nama_lengkap.trim().charAt(0).toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-      <div className="flex min-h-20 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+      {/* Mobile: judul di baris pertama, aksi di baris kedua. Desktop: satu baris. */}
+      <div className="grid gap-3 px-4 py-3 sm:flex sm:min-h-20 sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-3">
           <details className="group relative shrink-0 xl:hidden">
             <summary className="grid h-10 w-10 cursor-pointer list-none place-items-center rounded-xl border border-slate-200 bg-white text-lg text-slate-700 shadow-sm hover:bg-slate-50">
               <span aria-hidden="true">☰</span>
@@ -49,11 +26,9 @@ export default function AppTopbar({ title, subtitle, actions, role = "umum" }) {
                   {item.label}
                 </Link>
               ))}
-              {role !== "umum" ? (
-                <div className="mt-2 border-t border-slate-100 px-2 pt-2">
-                  <LogoutButton />
-                </div>
-              ) : null}
+              <div className="mt-2 border-t border-slate-100 px-2 pt-2">
+                <LogoutButton />
+              </div>
             </nav>
           </details>
 
@@ -62,29 +37,23 @@ export default function AppTopbar({ title, subtitle, actions, role = "umum" }) {
               RakBaca · Perpustakaan Digital
             </p>
             {title ? (
-              <h1 className="mt-1 truncate text-lg font-bold text-slate-900 sm:text-xl">
-                {title}
-              </h1>
+              <h1 className="mt-1 text-lg font-bold text-slate-900 sm:truncate sm:text-xl">{title}</h1>
             ) : null}
             {subtitle ? (
-              <p className="mt-1 hidden max-w-2xl text-sm text-slate-500 md:block">
-                {subtitle}
-              </p>
+              <p className="mt-1 hidden max-w-2xl text-sm text-slate-500 md:block">{subtitle}</p>
             ) : null}
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          {actions ? (
-            <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>
-          ) : null}
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 sm:gap-3 sm:px-3">
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end sm:gap-3">
+          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+          <div className="ml-auto flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 sm:ml-0 sm:gap-3 sm:px-3">
             <div className="grid h-8 w-8 place-items-center rounded-full bg-blue-600 text-sm font-bold text-white sm:h-9 sm:w-9">
-              R
+              {inisial}
             </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-semibold text-slate-900">RakBaca</p>
-              <p className="text-xs text-slate-500">{roleLabel}</p>
+            <div className="hidden min-w-0 sm:block">
+              <p className="max-w-40 truncate text-sm font-semibold text-slate-900">{user.nama_lengkap}</p>
+              <p className="text-xs text-slate-500">{ROLE_LABEL[user.role]}</p>
             </div>
           </div>
         </div>

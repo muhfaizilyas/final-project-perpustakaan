@@ -1,40 +1,15 @@
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
 import LogoutButton from "@/components/LogoutButton";
+import { NAV, ROLE_LABEL } from "@/lib/navigation";
 
-const navigation = {
-  umum: [
-    { href: "/dashboard", label: "Ringkasan", icon: "▣" },
-    { href: "/dashboard/buku", label: "Katalog Buku", icon: "▤" },
-  ],
-  admin: [
-    { href: "/dashboard/admin", label: "Dashboard Admin", icon: "▣" },
-    { href: "/dashboard/buku", label: "Manajemen Buku", icon: "▤" },
-    { href: "/dashboard/admin/kategori", label: "Kategori Buku", icon: "▦" },
-  ],
-  pegawai: [
-    { href: "/dashboard/pegawai", label: "Dashboard Pegawai", icon: "▣" },
-    { href: "/dashboard/buku", label: "Manajemen Buku", icon: "▤" },
-  ],
-  mahasiswa: [
-    { href: "/dashboard/mahasiswa", label: "Dashboard Mahasiswa", icon: "▣" },
-    { href: "/dashboard/buku", label: "Jelajahi Buku", icon: "▤" },
-  ],
-};
-
-export default function AppSidebar({ role = "umum" }) {
-  const items = navigation[role] ?? navigation.umum;
-  const roleLabel = {
-    umum: "Pengunjung",
-    admin: "Administrator",
-    pegawai: "Pegawai Perpustakaan",
-    mahasiswa: "Mahasiswa",
-  }[role] ?? "Pengguna";
+export default function AppSidebar({ user }) {
+  const items = NAV[user.role] ?? [];
 
   return (
     <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-r border-slate-200 bg-white/95 px-5 py-6 backdrop-blur xl:flex">
       <div className="mb-9">
-        <BrandMark />
+        <BrandMark href="/" />
       </div>
 
       <div>
@@ -59,10 +34,10 @@ export default function AppSidebar({ role = "umum" }) {
 
       <div className="mt-auto space-y-4">
         <div className="rounded-3xl bg-slate-900 p-4 text-white">
-          <p className="text-sm font-semibold">RakBaca</p>
-          <p className="mt-1 text-xs leading-5 text-slate-300">{roleLabel}</p>
+          <p className="truncate text-sm font-semibold">{user.nama_lengkap}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-300">{ROLE_LABEL[user.role]}</p>
         </div>
-        {role !== "umum" ? <LogoutButton /> : null}
+        <LogoutButton />
       </div>
     </aside>
   );
