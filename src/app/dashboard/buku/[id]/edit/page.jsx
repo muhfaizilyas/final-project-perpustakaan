@@ -8,7 +8,7 @@ import DashboardShell from "@/components/DashboardShell";
 export const metadata = { title: "Edit Buku" };
 
 export default async function EditBukuPage({ params }) {
-  await requireRole("admin", "pegawai");
+  const user = await requireRole("admin", "pegawai");
 
   const { id } = await params;
   const bukuId = Number(id);
@@ -31,8 +31,8 @@ export default async function EditBukuPage({ params }) {
   );
 
   return (
-    <DashboardShell role="admin" title="Edit Buku" subtitle="Perbarui informasi dan stok koleksi buku.">
-      <main className="mx-auto max-w-2xl py-4">
+    <DashboardShell user={user} title="Edit Buku" subtitle="Perbarui informasi dan stok koleksi buku.">
+      <div className="mx-auto max-w-2xl py-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <BukuForm
             action={updateBuku.bind(null, bukuId)}
@@ -42,7 +42,7 @@ export default async function EditBukuPage({ params }) {
             isEdit
           />
         </div>
-      </main>
+      </div>
     </DashboardShell>
   );
 }
