@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentUser, dashboardPath } from "@/lib/auth";
 import BrandMark from "@/components/BrandMark";
 import RegisterForm from "@/components/RegisterForm";
 
@@ -8,7 +10,10 @@ const notes = [
   "Peran akun Mahasiswa ditetapkan otomatis oleh sistem.",
 ];
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const user = await getCurrentUser();
+  if (user) redirect(dashboardPath(user.role)); // sudah login
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.12),_transparent_35%),linear-gradient(to_bottom,_#f8fafc,_#eef2ff_100%)] px-4 py-6 text-slate-800 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/5 sm:min-h-[calc(100vh-4rem)] xl:grid-cols-[0.95fr_1.05fr]">
