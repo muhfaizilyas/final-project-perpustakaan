@@ -118,3 +118,40 @@ export function validateUlasan({ rating, komentar }) {
     errors.rating = "Rating harus antara 1 sampai 5.";
   return errors;
 }
+
+// ---------------------------------------------------------------------
+// Pengumuman (dikelola Pegawai & Admin)
+// ---------------------------------------------------------------------
+export const KATEGORI_PENGUMUMAN = ["Operasional", "Layanan", "Acara"];
+export const STATUS_PENGUMUMAN = ["Draft", "Published"];
+
+// Memastikan teks "YYYY-MM-DD" benar-benar tanggal yang ada (bukan 2026-02-31).
+function tanggalValid(teks) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(teks)) return false;
+  const d = new Date(`${teks}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === teks;
+}
+
+export function validatePengumuman({ judul, konten, kategori, tanggal_rilis, status }) {
+  const errors = {};
+
+  if (!judul) errors.judul = "Judul wajib diisi.";
+  else if (judul.length < 5) errors.judul = "Judul minimal 5 karakter.";
+  else if (judul.length > 200) errors.judul = "Judul maksimal 200 karakter.";
+
+  if (!konten) errors.konten = "Isi pengumuman wajib diisi.";
+  else if (konten.length < 10) errors.konten = "Isi pengumuman minimal 10 karakter.";
+  else if (konten.length > 5000) errors.konten = "Isi pengumuman maksimal 5000 karakter.";
+
+  if (!KATEGORI_PENGUMUMAN.includes(kategori))
+    errors.kategori = "Pilih kategori pengumuman.";
+
+  if (!tanggal_rilis) errors.tanggal_rilis = "Tanggal rilis wajib diisi.";
+  else if (!tanggalValid(tanggal_rilis))
+    errors.tanggal_rilis = "Tanggal rilis tidak valid.";
+
+  if (!STATUS_PENGUMUMAN.includes(status))
+    errors.status = "Pilih status publikasi.";
+
+  return errors;
+}

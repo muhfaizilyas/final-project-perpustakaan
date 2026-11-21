@@ -14,7 +14,7 @@ export default function PublicShell({ children, user = null }) {
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
             <Link href="/katalog" className="hover:text-blue-700">Katalog</Link>
             <Link href="/#koleksi" className="hover:text-blue-700">Buku Populer</Link>
-            <Link href="/#pengumuman" className="hover:text-blue-700">Pengumuman</Link>
+            <Link href="/pengumuman" className="hover:text-blue-700">Pengumuman</Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (

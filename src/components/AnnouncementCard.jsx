@@ -1,7 +1,8 @@
+import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 
 /** Mendukung prop item={...} maupun penyebaran properti {...announcement}. */
-export default function AnnouncementCard({ item: itemProp, hideStatus = false, ...announcementFields }) {
+export default function AnnouncementCard({ item: itemProp, hideStatus = false, href, ...announcementFields }) {
   const item =
     itemProp && typeof itemProp === "object" && !Array.isArray(itemProp)
       ? itemProp
@@ -29,7 +30,13 @@ export default function AnnouncementCard({ item: itemProp, hideStatus = false, .
             </p>
           ) : null}
           <h3 className="break-words text-sm font-semibold leading-6 text-slate-900">
-            {title}
+            {href ? (
+              <Link href={href} className="hover:text-blue-700 hover:underline">
+                {title}
+              </Link>
+            ) : (
+              title
+            )}
           </h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">{summary}</p>
         </div>

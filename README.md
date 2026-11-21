@@ -32,7 +32,7 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - [x] Manajemen kategori (admin)
 - [x] Manajemen buku (admin & pegawai)
 - [ ] Manajemen user
-- [ ] Manajemen pengumuman (Draft / Published)
+- [x] Manajemen pengumuman (Draft / Published), daftar dan detail pengumuman publik
 - [x] Beranda (5 buku terpopuler, pengumuman terbaru, pencarian cepat)
 - [x] Katalog (filter kategori, urut tahun / rating) dan detail buku dengan ulasan
 - [x] Alur peminjaman (pengajuan, persetujuan / penolakan, pengembalian)
@@ -117,11 +117,11 @@ Akun `andi@student.kampus.ac.id` (password `mahasiswa123`) sengaja memiliki dend
 ```
 database/          schema.sql dan seed.sql (di luar folder app)
 src/
-  actions/         Server Actions (auth, kategori, buku, loan)
+  actions/         Server Actions (auth, kategori, buku, loan, pengumuman)
   app/             halaman dan route (App Router)
     login/ register/
-    katalog/ buku/[id]/   halaman publik (katalog dan detail buku)
-    dashboard/     admin/ pegawai/ mahasiswa/ buku/ transaksi/
+    katalog/ buku/[id]/ pengumuman/ pengumuman/[id]/   halaman publik
+    dashboard/     admin/ pegawai/ mahasiswa/ buku/ transaksi/ pengumuman/
   components/      komponen UI (form, tombol, ...)
   lib/             db.js (pool PostgreSQL), session.js, auth.js, validation.js
 ```

@@ -107,7 +107,12 @@ export default async function Home() {
       </section>
 
       <section id="pengumuman" className="mx-auto max-w-7xl scroll-mt-24 space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-        <SectionHeader eyebrow="Informasi" title="Pengumuman Terbaru" description="Kabar operasional, layanan, dan acara perpustakaan." />
+        <SectionHeader
+          eyebrow="Informasi"
+          title="Pengumuman Terbaru"
+          description="Kabar operasional, layanan, dan acara perpustakaan."
+          action={<Link href="/pengumuman" className="text-sm font-semibold text-sky-600 hover:text-sky-700">Lihat semua</Link>}
+        />
         {pengumuman.rows.length === 0 ? (
           <EmptyState title="Belum ada pengumuman" description="Pengumuman yang diterbitkan admin akan tampil di sini." />
         ) : (
@@ -116,6 +121,7 @@ export default async function Home() {
               <AnnouncementCard
                 key={p.id}
                 hideStatus
+                href={`/pengumuman/${p.id}`}
                 judul={p.judul}
                 kategori={p.kategori}
                 ringkasan={p.ringkasan}

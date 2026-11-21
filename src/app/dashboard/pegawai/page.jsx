@@ -62,6 +62,9 @@ export default async function PegawaiDashboardPage() {
           <Link href="/dashboard/buku" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
             Kelola Buku
           </Link>
+          <Link href="/dashboard/pengumuman" className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold !text-white transition hover:bg-slate-800">
+            Kelola Pengumuman
+          </Link>
         </>
       }
     >
