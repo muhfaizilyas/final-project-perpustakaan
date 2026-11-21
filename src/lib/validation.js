@@ -109,3 +109,12 @@ export function validateBuku(v) {
 
   return errors;
 }
+
+export function validateUlasan({ rating, komentar }) {
+  const errors = {};
+  const nilai = Number(rating);
+  if (!rating) errors.rating = "Rating wajib dipilih.";
+  else if (!Number.isInteger(nilai) || nilai < 1 || nilai > 5)
+    errors.rating = "Rating harus antara 1 sampai 5.";
+  return errors;
+}
