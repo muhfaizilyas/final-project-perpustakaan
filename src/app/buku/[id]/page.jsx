@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal, formatRupiah } from "@/lib/format";
 import PageShell from "@/components/PageShell";
 import StatusBadge from "@/components/StatusBadge";
+import CoverImage from "@/components/CoverImage";
 import EmptyState from "@/components/EmptyState";
 import AksiForm from "@/components/AksiForm";
 import { ajukanPinjam } from "@/actions/loan";
@@ -26,7 +27,7 @@ export default async function DetailBukuPage({ params }) {
   const [buku, ulasan] = await Promise.all([
     pool.query(
       `SELECT b.id, b.judul, b.isbn, b.pengarang, b.penerbit, b.tahun_terbit,
-              b.stok_total, b.stok_tersedia, b.durasi_maks_pinjam, b.denda_per_hari,
+              b.stok_total, b.stok_tersedia, b.durasi_maks_pinjam, b.denda_per_hari, b.cover_url,
               c.nama AS kategori
          FROM books b JOIN categories c ON c.id = b.category_id
         WHERE b.id = $1`,
@@ -81,9 +82,10 @@ export default async function DetailBukuPage({ params }) {
         </Link>
 
         <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="flex min-h-64 flex-col justify-between rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
-            <StatusBadge status={b.stok_tersedia > 0 ? "Tersedia" : "Stok habis"} />
-            <div>
+          <div className="relative flex min-h-64 flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
+            <CoverImage src={b.cover_url} alt={`Sampul ${b.judul}`} />
+            <div className="relative"><StatusBadge status={b.stok_tersedia > 0 ? "Tersedia" : "Stok habis"} /></div>
+            <div className="relative">
               <p className="text-[11px] uppercase tracking-[0.24em] text-white/75">RakBaca</p>
               <h2 className="mt-2 break-words text-2xl font-black leading-tight">{b.judul}</h2>
               <p className="mt-1 text-sm text-white/85">{b.pengarang}</p>

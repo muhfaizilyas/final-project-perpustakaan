@@ -21,7 +21,7 @@ export default async function Home() {
   const [populer, pengumuman] = await Promise.all([
     // 5 buku paling sering dipinjam: JOIN + COUNT
     pool.query(`
-      SELECT b.id, b.judul, b.pengarang, b.stok_tersedia, c.nama AS kategori,
+      SELECT b.id, b.judul, b.pengarang, b.stok_tersedia, b.cover_url, c.nama AS kategori,
              COUNT(DISTINCT l.id)::int AS jumlah_pinjam,
              ROUND(AVG(r.rating), 1)::text AS rating
         FROM books b
@@ -99,6 +99,7 @@ export default async function Home() {
               pengarang={b.pengarang}
               kategori={b.kategori}
               stok_tersedia={b.stok_tersedia}
+              cover_url={b.cover_url}
               rating={b.rating}
               href={`/buku/${b.id}`}
             />

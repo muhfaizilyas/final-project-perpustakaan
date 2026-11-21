@@ -1,5 +1,6 @@
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
+import CoverImage from "@/components/CoverImage";
 
 /**
  * Mendukung dua pola lama pemanggilan:
@@ -17,13 +18,15 @@ export default function BookCard({ book: bookProp, badge, ...bookFields }) {
   const category = book.category ?? book.kategori ?? "Kategori belum tersedia";
   const stock = book.stock ?? book.stok_tersedia ?? book.stok_total ?? "—";
   const status = badge ?? book.status ?? (Number(stock) > 0 ? "Tersedia" : "Stok habis");
+  const cover = book.cover_url ?? book.cover ?? null;
   const rating = book.rating;
   const href = typeof book.href === "string" && book.href.length > 0 ? book.href : "#";
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/80">
-      <div className="aspect-[4/3] min-h-52 bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 p-5 text-white">
-        <div className="flex h-full flex-col justify-between gap-4">
+      <div className="relative aspect-[4/3] min-h-52 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 p-5 text-white">
+        <CoverImage src={cover} alt={`Sampul ${title}`} />
+        <div className="relative flex h-full flex-col justify-between gap-4">
           <StatusBadge status={status} />
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.24em] text-white/75">

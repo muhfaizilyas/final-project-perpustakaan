@@ -26,7 +26,7 @@ export default async function KatalogPage({ searchParams }) {
   const [{ rows: buku }, { rows: daftarKategori }] = await Promise.all([
     pool.query(
       `SELECT b.id, b.judul, b.pengarang, b.tahun_terbit, b.stok_tersedia,
-              c.nama AS kategori,
+              b.cover_url, c.nama AS kategori,
               ROUND(AVG(r.rating), 1)::text AS rating
          FROM books b
          JOIN categories c ON c.id = b.category_id
@@ -76,6 +76,7 @@ export default async function KatalogPage({ searchParams }) {
                 pengarang={b.pengarang}
                 kategori={b.kategori}
                 stok_tersedia={b.stok_tersedia}
+                cover_url={b.cover_url}
                 rating={b.rating}
                 href={`/buku/${b.id}`}
               />
