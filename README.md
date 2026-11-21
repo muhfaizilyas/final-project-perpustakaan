@@ -30,15 +30,15 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - [x] Login, register mahasiswa (validasi email kampus), logout
 - [x] Proteksi halaman berdasarkan role (dicek di server)
 - [x] Manajemen kategori (admin)
-- [ ] Manajemen buku
+- [x] Manajemen buku (admin & pegawai)
 - [ ] Manajemen user
 - [ ] Manajemen pengumuman (Draft / Published)
-- [ ] Beranda (5 buku terpopuler, pengumuman terbaru, pencarian cepat)
-- [ ] Katalog (filter kategori, urut tahun / rating) dan detail buku
+- [x] Beranda (5 buku terpopuler, pengumuman terbaru, pencarian cepat)
+- [x] Katalog (filter kategori, urut tahun / rating) dan detail buku dengan ulasan
 - [ ] Alur peminjaman (pengajuan, persetujuan / penolakan, pengembalian)
 - [ ] Perpanjangan dan perhitungan denda
 - [ ] Ulasan dan rating buku
-- [ ] Dashboard Mahasiswa, Pegawai, dan Admin
+- [x] Dashboard ringkasan Mahasiswa, Pegawai, dan Admin (data dari database)
 
 ## Aturan Bisnis yang Diterapkan
 
@@ -120,7 +120,8 @@ src/
   actions/         Server Actions (auth, kategori, ...)
   app/             halaman dan route (App Router)
     login/ register/
-    dashboard/     admin/ pegawai/ mahasiswa/
+    katalog/ buku/[id]/   halaman publik (katalog dan detail buku)
+    dashboard/     admin/ pegawai/ mahasiswa/ buku/
   components/      komponen UI (form, tombol, ...)
   lib/             db.js (pool PostgreSQL), session.js, auth.js, validation.js
 ```
