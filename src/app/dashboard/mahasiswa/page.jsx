@@ -138,7 +138,7 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
                         Estimasi denda berjalan {formatRupiah(b.estimasi_denda)}
                       </p>
                     ) : null}
-                    {b.status_perpanjangan !== "Perpanjangan Diajukan" ? (
+                    {!["Perpanjangan Diajukan", "Perpanjangan Disetujui"].includes(b.status_perpanjangan) ? (
                       <div className="mt-4">
                         <AksiForm action={ajukanPerpanjangan} id={b.id} label="Ajukan Perpanjangan" variant="neutral" />
                       </div>

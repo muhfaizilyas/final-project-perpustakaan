@@ -95,6 +95,8 @@ export async function ajukanPerpanjangan(prevState, formData) {
     return gagal("Perpanjangan hanya untuk buku yang sedang dipinjam.");
   if (loan.status_perpanjangan === "Perpanjangan Diajukan")
     return gagal("Perpanjangan sedang menunggu persetujuan pegawai.");
+  if (loan.status_perpanjangan === "Perpanjangan Disetujui")
+    return gagal("Perpanjangan hanya bisa dilakukan satu kali per peminjaman.");
 
   await pool.query(
     `UPDATE loans SET status_perpanjangan = 'Perpanjangan Diajukan'
