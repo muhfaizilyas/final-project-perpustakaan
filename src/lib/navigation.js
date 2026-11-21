@@ -4,11 +4,13 @@ export const NAV = {
     { href: "/dashboard/admin", label: "Dashboard Admin", icon: "▣" },
     { href: "/dashboard/buku", label: "Manajemen Buku", icon: "▤" },
     { href: "/dashboard/admin/kategori", label: "Kategori Buku", icon: "▦" },
+    { href: "/dashboard/transaksi", label: "Transaksi", icon: "⇄" },
     { href: "/katalog", label: "Katalog Buku", icon: "◫" },
   ],
   pegawai: [
     { href: "/dashboard/pegawai", label: "Dashboard Pegawai", icon: "▣" },
     { href: "/dashboard/buku", label: "Manajemen Buku", icon: "▤" },
+    { href: "/dashboard/transaksi", label: "Transaksi", icon: "⇄" },
     { href: "/katalog", label: "Katalog Buku", icon: "◫" },
   ],
   mahasiswa: [
