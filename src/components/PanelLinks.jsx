@@ -40,14 +40,14 @@ export default function PanelLinks({ grup, label }) {
                 href={item.href}
                 scroll={item.tetapScroll ? false : undefined}
                 aria-current={aktif ? "page" : undefined}
-                className={`flex items-center gap-2.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs md:mb-1 md:w-full md:rounded-lg md:border-0 md:px-3 md:py-2.5 md:text-[13px] ${
+                className={`flex items-center gap-2.5 whitespace-nowrap rounded-full md:whitespace-normal border px-3 py-1.5 text-xs md:mb-1 md:w-full md:rounded-lg md:border-0 md:px-3 md:py-2.5 md:text-[13px] ${
                   aktif
                     ? "border-[#e8efff] bg-[#e8efff] font-semibold text-[#2453bd]"
                     : "border-[#dce1eb] bg-white text-[#182339] hover:bg-[#f4f5f9] md:bg-transparent"
                 }`}
               >
                 {item.ikon ? <Ikon nama={item.ikon} className="hidden md:block" /> : null}
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                <span className="min-w-0 flex-1 md:leading-snug">{item.label}</span>
                 {item.badge !== undefined ? (
                   <span className="rounded-full bg-[#eef1f7] px-2 py-0.5 text-[10px] text-[#4b5870]">{item.badge}</span>
                 ) : null}

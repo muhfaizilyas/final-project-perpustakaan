@@ -19,7 +19,7 @@
   --color-sky-600: #385b46;
   --color-sky-700: #294d3b;
   --color-sky-800: var(--pine);
-  background: var(--paper);
+  background: var(--latar);
   color: var(--ink);
   color-scheme: light;
 }

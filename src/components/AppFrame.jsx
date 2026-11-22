@@ -26,8 +26,8 @@ export default function AppFrame({ user = null, section, panel, aside, title, su
 
   const kolom = panel
     ? aside
-      ? "md:grid md:grid-cols-[208px_minmax(0,1fr)] lg:grid-cols-[208px_minmax(0,1fr)_minmax(220px,24%)]"
-      : "md:grid md:grid-cols-[208px_minmax(0,1fr)]"
+      ? "md:grid md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[240px_minmax(0,1fr)_minmax(220px,24%)]"
+      : "md:grid md:grid-cols-[240px_minmax(0,1fr)]"
     : "";
 
   return (
