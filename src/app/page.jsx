@@ -1,6 +1,6 @@
 import Link from "next/link";
 import pool from "@/lib/db";
-import { getCurrentUser, dashboardPath } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
 import PublicShell from "@/components/PublicShell";
 import SectionHeader from "@/components/SectionHeader";
@@ -42,11 +42,11 @@ export default async function Home() {
 
   return (
     <PublicShell user={user}>
-      <section className="mx-auto max-w-7xl px-4 pb-10 pt-12 sm:px-6 sm:pt-16 lg:px-8">
+      <section className="rb-hero">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-700">Perpustakaan Kampus</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-            Temukan, pinjam, dan baca lebih mudah.
+            Buku baru,<br /><em>sudut pandang baru.</em>
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
             RakBaca membantu mahasiswa mencari buku, mengajukan peminjaman, dan memantau jatuh tempo tanpa antre di meja sirkulasi.
@@ -65,15 +65,13 @@ export default async function Home() {
             </button>
           </form>
 
-          <div className="mt-5 flex flex-wrap gap-3 text-sm">
-            <Link href="/katalog" className="font-semibold text-sky-600 hover:text-sky-700">Lihat semua katalog &rarr;</Link>
-            {!user ? (
+          {!user && (
+            <div className="mt-5 text-sm">
               <Link href="/register" className="font-semibold text-slate-600 hover:text-slate-900">Daftar sebagai mahasiswa</Link>
-            ) : (
-              <Link href={dashboardPath(user.role)} className="font-semibold text-slate-600 hover:text-slate-900">Buka dashboard</Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+        <div className="rb-poster" aria-hidden="true"><div className="rb-label"><span>RAKBACA PRESS</span><span>PL. 01</span></div><div className="rb-books"><div className="rb-volume rb-back"><small>ARSIP KAMPUS</small><b>Ruang<br />Ilmu</b></div><div className="rb-volume rb-front"><small>PUSTAKA / 01</small><b>Seni<br /><i>Membaca</i></b><div className="rb-print"/><small>EDISI PERPUSTAKAAN</small></div></div><div className="rb-label"><span>STUDI SAMPUL</span><span>FIG. 01 — 02</span></div></div>
       </section>
 
       <section id="fitur" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-8 sm:px-6 lg:px-8">
@@ -92,6 +90,7 @@ export default async function Home() {
           action={<Link href="/katalog" className="text-sm font-semibold text-sky-600 hover:text-sky-700">Lihat semua</Link>}
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {!populer.rows.length && <div className="col-span-full"><EmptyState title="Koleksi belum tersedia" description="Buku akan tampil di sini setelah ditambahkan ke katalog." /></div>}
           {populer.rows.map((b) => (
             <BookCard
               key={b.id}

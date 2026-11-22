@@ -31,17 +31,12 @@ export default function AppFrame({ user = null, section, panel, aside, title, su
     : "";
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] pb-16 text-[#182339] md:pb-0">
+    <div className="rb-frame min-h-screen pb-16 md:pb-0">
+      <a className="rb-skip" href="#rb-content">Langsung ke konten</a>
       <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-white/70 bg-white/80 px-3 shadow-[0_1px_0_rgba(24,35,57,0.05)] backdrop-blur-md sm:px-6 md:h-[78px] md:gap-6">
         {/* Kiri: logo bergradien + nama aplikasi */}
         <Link href="/" aria-label="RakBaca, Perpustakaan Kampus" className="flex shrink-0 items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-gradient-to-br from-[#5b3df5] via-[#3b5bf0] to-[#1e90ff] text-lg font-extrabold text-white shadow-lg shadow-indigo-500/30">
-            R
-          </span>
-          <span className="hidden leading-tight min-[420px]:block">
-            <span className="block text-[12px] font-semibold uppercase tracking-[0.24em] text-[#6b7a99]">RakBaca</span>
-            <span className="block text-sm font-semibold text-[#0f172a]">Perpustakaan Kampus</span>
-          </span>
+          <span className="rb-mark"><Ikon nama="book" /></span><span className="rb-wordmark">RakBaca</span>
         </Link>
 
         {/* Tengah: empat menu utama */}
@@ -89,7 +84,7 @@ export default function AppFrame({ user = null, section, panel, aside, title, su
           </div>
         ) : null}
 
-        <main className={penuh ? "min-w-0" : "min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8"}>
+        <main id="rb-content" tabIndex={-1} className={penuh ? "min-w-0" : "min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8"}>
           {title || actions ? (
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
