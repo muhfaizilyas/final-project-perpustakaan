@@ -2,7 +2,8 @@ import pool from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
 import { KATEGORI_PENGUMUMAN } from "@/lib/validation";
-import PageShell from "@/components/PageShell";
+import AppFrame from "@/components/AppFrame";
+import { PengumumanPanel } from "@/components/SectionPanels";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import EmptyState from "@/components/EmptyState";
 
@@ -23,7 +24,13 @@ export default async function DaftarPengumumanPage({ searchParams }) {
   );
 
   return (
-    <PageShell user={user} section="pengumuman" aktif={filter} title="Pengumuman" subtitle="Kabar operasional, layanan, dan acara perpustakaan.">
+    <AppFrame
+      user={user}
+      section="pengumuman"
+      panel={<PengumumanPanel user={user} aktif={filter} />}
+      title="Pengumuman"
+      subtitle="Kabar operasional, layanan, dan acara perpustakaan."
+    >
       <div className="space-y-6">
         {rows.length === 0 ? (
           <EmptyState title="Belum ada pengumuman" description="Pengumuman yang sudah diterbitkan akan tampil di sini." />
@@ -43,6 +50,6 @@ export default async function DaftarPengumumanPage({ searchParams }) {
           </div>
         )}
       </div>
-    </PageShell>
+    </AppFrame>
   );
 }

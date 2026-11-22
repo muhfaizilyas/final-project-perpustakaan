@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import pool from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
-import PageShell from "@/components/PageShell";
+import AppFrame from "@/components/AppFrame";
+import { PengumumanPanel } from "@/components/SectionPanels";
 import StatusBadge from "@/components/StatusBadge";
 
 async function ambilPengumuman(id) {
@@ -37,7 +38,13 @@ export default async function DetailPengumumanPage({ params }) {
   if (p.status !== "Published" && !staf) notFound();
 
   return (
-    <PageShell user={user} section="pengumuman" title="Pengumuman" subtitle="Informasi resmi dari perpustakaan kampus.">
+    <AppFrame
+      user={user}
+      section="pengumuman"
+      panel={<PengumumanPanel user={user} />}
+      title="Pengumuman"
+      subtitle="Informasi resmi dari perpustakaan kampus."
+    >
       <div className="mx-auto max-w-3xl space-y-6">
         <Link href="/pengumuman" className="text-sm font-semibold text-sky-600 hover:text-sky-700">
           &larr; Semua pengumuman
@@ -61,6 +68,6 @@ export default async function DetailPengumumanPage({ params }) {
           <div className="mt-6 whitespace-pre-line break-words text-base leading-7 text-slate-700">{p.konten}</div>
         </article>
       </div>
-    </PageShell>
+    </AppFrame>
   );
 }
