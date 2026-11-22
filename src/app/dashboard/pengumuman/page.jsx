@@ -37,7 +37,7 @@ export default async function PengumumanAdminPage({ searchParams }) {
   );
 
   return (
-    <DashboardShell
+    <DashboardShell section="pengumuman"
       user={user}
       title="Manajemen Pengumuman"
       subtitle="Kelola pengumuman operasional, layanan, dan acara perpustakaan."

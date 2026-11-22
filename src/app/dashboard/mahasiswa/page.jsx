@@ -103,7 +103,7 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
           {stats.map((item) => <MetricCard key={item.label} {...item} />)}
         </section>
 
-        <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+        <section id="pinjaman" className="grid scroll-mt-20 grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-5">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Buku Sedang Dipinjam</h2>
@@ -170,7 +170,7 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
           </div>
         </section>
 
-        <section>
+        <section id="riwayat" className="scroll-mt-20">
           <h2 className="text-xl font-bold text-slate-900">Riwayat Transaksi</h2>
           <p className="mt-1 text-sm text-slate-500">Semua pengajuan, peminjaman, dan denda kamu.</p>
           <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">

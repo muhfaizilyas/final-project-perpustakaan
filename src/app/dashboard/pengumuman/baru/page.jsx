@@ -12,7 +12,7 @@ export default async function PengumumanBaruPage() {
   const hariIni = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Makassar" });
 
   return (
-    <DashboardShell user={user} title="Tambah Pengumuman" subtitle="Buat pengumuman baru. Simpan sebagai Draft jika belum siap tayang.">
+    <DashboardShell section="pengumuman" user={user} title="Tambah Pengumuman" subtitle="Buat pengumuman baru. Simpan sebagai Draft jika belum siap tayang.">
       <div className="mx-auto max-w-2xl py-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <PengumumanForm

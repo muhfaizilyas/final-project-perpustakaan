@@ -22,7 +22,7 @@ export default async function EditPengumumanPage({ params }) {
   if (rows.length === 0) notFound();
 
   return (
-    <DashboardShell user={user} title="Edit Pengumuman" subtitle="Perbarui isi atau status publikasi pengumuman.">
+    <DashboardShell section="pengumuman" user={user} title="Edit Pengumuman" subtitle="Perbarui isi atau status publikasi pengumuman.">
       <div className="mx-auto max-w-2xl py-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <PengumumanForm

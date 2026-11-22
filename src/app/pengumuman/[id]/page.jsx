@@ -37,7 +37,7 @@ export default async function DetailPengumumanPage({ params }) {
   if (p.status !== "Published" && !staf) notFound();
 
   return (
-    <PageShell user={user} title="Pengumuman" subtitle="Informasi resmi dari perpustakaan kampus.">
+    <PageShell user={user} section="pengumuman" title="Pengumuman" subtitle="Informasi resmi dari perpustakaan kampus.">
       <div className="mx-auto max-w-3xl space-y-6">
         <Link href="/pengumuman" className="text-sm font-semibold text-sky-600 hover:text-sky-700">
           &larr; Semua pengumuman

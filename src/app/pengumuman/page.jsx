@@ -1,4 +1,3 @@
-import Link from "next/link";
 import pool from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
@@ -23,23 +22,9 @@ export default async function DaftarPengumumanPage({ searchParams }) {
     [filter]
   );
 
-  const chip = (aktif) =>
-    `rounded-full px-4 py-2 text-sm font-semibold transition ${
-      aktif ? "bg-slate-900 !text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-    }`;
-
   return (
-    <PageShell user={user} title="Pengumuman" subtitle="Kabar operasional, layanan, dan acara perpustakaan.">
+    <PageShell user={user} section="pengumuman" aktif={filter} title="Pengumuman" subtitle="Kabar operasional, layanan, dan acara perpustakaan.">
       <div className="space-y-6">
-        <div className="flex flex-wrap gap-2">
-          <Link href="/pengumuman" className={chip(filter === "")}>Semua</Link>
-          {KATEGORI_PENGUMUMAN.map((k) => (
-            <Link key={k} href={`/pengumuman?kategori=${k}`} className={chip(filter === k)}>
-              {k}
-            </Link>
-          ))}
-        </div>
-
         {rows.length === 0 ? (
           <EmptyState title="Belum ada pengumuman" description="Pengumuman yang sudah diterbitkan akan tampil di sini." />
         ) : (
