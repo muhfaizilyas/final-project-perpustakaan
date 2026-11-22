@@ -1,3 +1,4 @@
+import "../auth.css";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BrandMark from "@/components/BrandMark";
@@ -17,7 +18,7 @@ export default async function LoginPage() {
   if (user) redirect(dashboardPath(user.role)); // sudah login
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_35%),linear-gradient(to_bottom,_#f8fafc,_#eef2ff_100%)] px-4 py-8 text-slate-800 md:px-6 lg:px-8">
+    <div className="rb-auth min-h-screen px-4 py-8 text-slate-800 md:px-6 lg:px-8">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-white/60 bg-white/80 shadow-2xl shadow-slate-900/5 backdrop-blur xl:grid-cols-[1.05fr_0.95fr]">
         <section className="flex flex-col justify-between bg-slate-950 p-8 text-white md:p-10 lg:p-12">
           <div>
