@@ -2,6 +2,7 @@ import Link from "next/link";
 import pool from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
+import SampulBergilir from "@/components/SampulBergilir";
 import PublicShell from "@/components/PublicShell";
 import SectionHeader from "@/components/SectionHeader";
 import InfoCard from "@/components/InfoCard";
@@ -71,7 +72,7 @@ export default async function Home() {
             </div>
           )}
         </div>
-        <div className="rb-poster" aria-hidden="true"><div className="rb-label"><span>RAKBACA PRESS</span><span>PL. 01</span></div><div className="rb-books"><div className="rb-volume rb-back"><small>ARSIP KAMPUS</small><b>Ruang<br />Ilmu</b></div><div className="rb-volume rb-front"><small>PUSTAKA / 01</small><b>Seni<br /><i>Membaca</i></b><div className="rb-print"/><small>EDISI PERPUSTAKAAN</small></div></div><div className="rb-label"><span>STUDI SAMPUL</span><span>FIG. 01 — 02</span></div></div>
+        <SampulBergilir buku={populer.rows.filter(b => b.stok_tersedia > 0 && b.cover_url?.trim()).map(b => ({ id: b.id, judul: b.judul, src: b.cover_url.trim() }))} />
       </section>
 
       <section id="fitur" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-8 sm:px-6 lg:px-8">

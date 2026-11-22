@@ -1,0 +1,18 @@
+.stage { pointer-events:none; }
+.scene { position:absolute; inset:0; display:grid; place-items:center; }
+.scene .bound { padding:0; border:0; overflow:visible; isolation:isolate; border-radius:2px 4px 3px 2px; box-shadow:3px 4px 0 #e5deca,5px 6px 0 #c3b79c,6px 7px 0 #584e3e,10px 13px 12px #26352238,17px 23px 25px #20332329; }
+.bound::before { content:''; position:absolute; z-index:-1; inset:3px -5px -5px 3px; border-radius:inherit; background:repeating-linear-gradient(0deg,#d8d0ba 0 1px,#f5efdb 1px 2px,#ddd6c2 2px 3px); }
+.art,.binding { display:block; position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; }
+.art { object-fit:cover; }
+.binding { box-shadow:inset 0 1px 1px #fff5,inset -1px 0 1px #16170750; background:linear-gradient(90deg,#17170f65 0%,#fff3 1.5%,#302a242f 3.8%,#18160f42 5%,#fff2 6.2%,transparent 9%),linear-gradient(118deg,#fff1,transparent 48%,#1e201813); }
+.incoming,.outgoing { animation:slideIn 880ms cubic-bezier(.45,0,.18,1) both; }
+.outgoing { animation-name:slideOut; }
+@keyframes slideIn { from { transform:translate3d(calc(var(--arah)*105%),0,0); } to { transform:translate3d(0,0,0); } }
+@keyframes slideOut { from { transform:translate3d(0,0,0); } to { transform:translate3d(calc(var(--arah)*-105%),0,0); } }
+.controls { display:flex; align-items:center; justify-content:center; margin-block:-8px; }
+.controls button.dot,.controls button.play { display:grid; place-items:center; width:24px; height:26px; border:0; border-radius:50%; padding:0; background:transparent; color:#264534; }
+.dot::before { content:''; width:7px; height:7px; background:#c9cfb4; border:1px solid #58725c; border-radius:50%; transition:background .2s,transform .2s; }
+.dot[aria-current]::before { background:#244c3f; border-color:#244c3f; transform:scale(1.4); }
+.controls button:focus-visible { outline:2px solid #244c3f; outline-offset:0; }
+@media(max-width:420px){.controls{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);margin:0}.stage{margin-bottom:15px}.stage~div>span{align-self:flex-end;font-size:7px}}
+@media(prefers-reduced-motion:reduce){.incoming,.outgoing{animation:none}.outgoing{display:none}.dot::before{transition:none}}
