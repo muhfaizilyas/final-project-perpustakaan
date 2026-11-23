@@ -50,14 +50,14 @@ INSERT INTO categories (nama, kode, deskripsi) VALUES
 INSERT INTO books
 (judul, isbn, pengarang, penerbit, tahun_terbit, category_id,
  stok_total, stok_tersedia, durasi_maks_pinjam, denda_per_hari, cover_url) VALUES
-('Clean Code', '978-602-0000-01-1', 'Robert C. Martin', 'Prentice Hall', 2008, 1, 5, 5, 7, 1000, NULL),
-('Introduction to Algorithms', '978-602-0000-02-8', 'Thomas H. Cormen dkk.', 'MIT Press', 2009, 1, 3, 3, 14, 1000, NULL),
-('Database System Concepts', '978-602-0000-03-5', 'Abraham Silberschatz dkk.', 'McGraw-Hill', 2019, 1, 4, 3, 7, 1000, NULL),
-('Pengantar Ilmu Hukum', '978-602-0000-04-2', 'Peter Mahmud Marzuki', 'Kencana', 2008, 2, 3, 2, 7, 1500, NULL),
-('Textbook of Medical Physiology', '978-602-0000-05-9', 'John E. Hall', 'Elsevier', 2016, 3, 2, 2, 7, 2000, NULL),
-('Principles of Economics', '978-602-0000-06-6', 'N. Gregory Mankiw', 'Cengage Learning', 2014, 5, 4, 4, 14, 1000, NULL),
-('Laskar Pelangi', '978-602-0000-07-3', 'Andrea Hirata', 'Bentang Pustaka', 2005, 4, 6, 6, 7, 500, NULL),
-('Bumi Manusia', '978-602-0000-08-0', 'Pramoedya Ananta Toer', 'Hasta Mitra', 1980, 4, 2, 0, 7, 500, NULL);
+('Clean Code', '978-602-0000-01-1', 'Robert C. Martin', 'Prentice Hall', 2008, 1, 5, 5, 7, 1000, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Clean+Code'),
+('Introduction to Algorithms', '978-602-0000-02-8', 'Thomas H. Cormen dkk.', 'MIT Press', 2009, 1, 3, 3, 14, 1000, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Introduction+to+Algorithms'),
+('Database System Concepts', '978-602-0000-03-5', 'Abraham Silberschatz dkk.', 'McGraw-Hill', 2019, 1, 4, 3, 7, 1000, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Database+System+Concepts'),
+('Pengantar Ilmu Hukum', '978-602-0000-04-2', 'Peter Mahmud Marzuki', 'Kencana', 2008, 2, 3, 2, 7, 1500, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Pengantar+Ilmu+Hukum'),
+('Textbook of Medical Physiology', '978-602-0000-05-9', 'John E. Hall', 'Elsevier', 2016, 3, 2, 2, 7, 2000, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Textbook+of+Medical+Physiology'),
+('Principles of Economics', '978-602-0000-06-6', 'N. Gregory Mankiw', 'Cengage Learning', 2014, 5, 4, 4, 14, 1000, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Principles+of+Economics'),
+('Laskar Pelangi', '978-602-0000-07-3', 'Andrea Hirata', 'Bentang Pustaka', 2005, 4, 6, 6, 7, 500, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Laskar+Pelangi'),
+('Bumi Manusia', '978-602-0000-08-0', 'Pramoedya Ananta Toer', 'Hasta Mitra', 1980, 4, 2, 0, 7, 500, 'https://placehold.co/300x440/1b3358/f4ecd8?text=Bumi+Manusia');
 
 -- ---------------------------------------------------------------------
 -- ANNOUNCEMENTS (dibuat oleh pegawai id=2)

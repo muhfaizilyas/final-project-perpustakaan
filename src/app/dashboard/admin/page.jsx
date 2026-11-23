@@ -17,7 +17,7 @@ export default async function AdminDashboardPage() {
   const [ringkasan, peminjamanTerbaru, perKategori] = await Promise.all([
     pool.query(`
       SELECT
-        (SELECT COUNT(*)::int FROM users WHERE role = 'mahasiswa' AND is_active) AS mahasiswa,
+        (SELECT COUNT(*)::int FROM users WHERE role = 'mahasiswa') AS mahasiswa,
         (SELECT COUNT(*)::int FROM books)      AS buku,
         (SELECT COALESCE(SUM(stok_total), 0)::int FROM books) AS eksemplar,
         (SELECT COUNT(*)::int FROM loans
@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
   const stats = [
     { label: "Total Judul Buku", value: r.buku, note: "Judul di koleksi", tone: "amber" },
     { label: "Total Eksemplar", value: r.eksemplar, note: "Jumlah stok seluruh buku", tone: "violet" },
-    { label: "Mahasiswa Terdaftar", value: r.mahasiswa, note: "Akun mahasiswa aktif", tone: "sky" },
+    { label: "Mahasiswa Terdaftar", value: r.mahasiswa, note: "Semua akun mahasiswa (aktif dan nonaktif)", tone: "sky" },
     { label: "Transaksi Aktif", value: r.transaksi_aktif, note: "Menunggu + sedang dipinjam", tone: "emerald" },
     { label: "Denda Lunas", value: formatRupiah(r.denda_lunas), note: "Total denda yang sudah dibayar", tone: "rose" },
   ];

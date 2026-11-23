@@ -57,7 +57,7 @@ export async function createBuku(prevState, formData) {
         values.judul, values.isbn, values.pengarang, values.penerbit,
         Number(values.tahun_terbit), Number(values.category_id),
         Number(values.stok_total), Number(values.durasi_maks_pinjam),
-        Number(values.denda_per_hari), values.cover_url || null,
+        Number(values.denda_per_hari), values.cover_url,
       ]
     );
   } catch (err) {
@@ -108,7 +108,7 @@ export async function updateBuku(id, prevState, formData) {
         values.judul, values.isbn, values.pengarang, values.penerbit,
         Number(values.tahun_terbit), Number(values.category_id),
         Number(values.stok_total), Number(values.durasi_maks_pinjam),
-        Number(values.denda_per_hari), values.cover_url || null, id,
+        Number(values.denda_per_hari), values.cover_url, id,
       ]
     );
     if (result.rowCount === 0) {

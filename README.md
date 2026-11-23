@@ -84,10 +84,10 @@ Salin `.env.example` menjadi `.env.local`, lalu isi:
 
 ```env
 DATABASE_URL=postgresql://postgres:PASSWORD_KAMU@localhost:5432/perpustakaan
-SESSION_SECRET=isi_dengan_teks_acak_minimal_32_karakter
+SESSION_SECRET=<tempel hasil perintah di bawah, minimal 32 karakter>
 ```
 
-Membuat `SESSION_SECRET` acak:
+Membuat `SESSION_SECRET` acak (aplikasi menolak nilai yang kurang dari 32 karakter):
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"

@@ -71,7 +71,7 @@ export default function BukuForm({ action, categories, initial = {}, submitLabel
           : "Buku baru: semua eksemplar langsung tersedia untuk dipinjam."}
       </p>
 
-      <FormField label="URL cover (opsional)" name="cover_url" defaultValue={v.cover_url ?? ""} error={e.cover_url} placeholder="https://..." />
+      <FormField label="URL cover" name="cover_url" defaultValue={v.cover_url ?? ""} error={e.cover_url} placeholder="https://..." />
 
       <div className="flex gap-3">
         <button

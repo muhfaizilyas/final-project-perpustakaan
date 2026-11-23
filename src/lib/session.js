@@ -4,10 +4,18 @@ import { cookies } from "next/headers";
 const COOKIE_NAME = "session";
 const DURASI_HARI = 7;
 
+const PANJANG_MIN_SECRET = 32;
+
 function getKey() {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
     throw new Error("SESSION_SECRET belum diisi di .env.local");
+  }
+  // HS256 butuh kunci yang cukup panjang; secret pendek mudah ditebak (brute force).
+  if (secret.length < PANJANG_MIN_SECRET) {
+    throw new Error(
+      `SESSION_SECRET terlalu pendek (${secret.length} karakter). Minimal ${PANJANG_MIN_SECRET} karakter acak.`
+    );
   }
   return new TextEncoder().encode(secret);
 }

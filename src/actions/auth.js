@@ -7,6 +7,11 @@ import { createSession, deleteSession } from "@/lib/session";
 import { dashboardPath } from "@/lib/auth";
 import { validateLogin, validateRegister } from "@/lib/validation";
 
+// Hash palsu (cost 10, sama dengan hash asli) untuk email yang tidak terdaftar.
+// Dengan begitu bcrypt.compare tetap berjalan dan waktu respons login sama,
+// sehingga penyerang tidak bisa menebak email terdaftar dari lamanya respons.
+const HASH_DUMMY = bcrypt.hashSync("password-palsu-untuk-menyamakan-waktu", 10);
+
 // state awal form: { errors: {}, message: "", values: {} }
 
 export async function loginAction(prevState, formData) {
@@ -28,10 +33,9 @@ export async function loginAction(prevState, formData) {
 
   // Pesan sengaja disamakan agar tidak membocorkan email mana yang terdaftar.
   const salah = { errors: {}, message: "Email atau password salah.", values };
-  if (!user) return salah;
-
-  const cocok = await bcrypt.compare(password, user.password);
-  if (!cocok) return salah;
+  // Selalu jalankan compare, juga saat email tidak ditemukan (lawan hash palsu).
+  const cocok = await bcrypt.compare(password, user ? user.password : HASH_DUMMY);
+  if (!user || !cocok) return salah;
 
   if (!user.is_active) {
     return {

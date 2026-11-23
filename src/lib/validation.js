@@ -119,11 +119,10 @@ export function validateBuku(v) {
   else if (Number(v.denda_per_hari) < 0) errors.denda_per_hari = "Denda tidak boleh negatif.";
   else if (Number(v.denda_per_hari) > 99999999) errors.denda_per_hari = "Denda terlalu besar.";
 
-  if (v.cover_url) {
-    if (!/^https?:\/\/\S+$/i.test(v.cover_url))
-      errors.cover_url = "URL cover harus diawali http:// atau https://.";
-    else if (v.cover_url.length > 500) errors.cover_url = "URL cover terlalu panjang.";
-  }
+  if (!v.cover_url) errors.cover_url = "URL cover wajib diisi.";
+  else if (!/^https?:\/\/\S+$/i.test(v.cover_url))
+    errors.cover_url = "URL cover harus diawali http:// atau https://.";
+  else if (v.cover_url.length > 500) errors.cover_url = "URL cover terlalu panjang.";
 
   return errors;
 }
