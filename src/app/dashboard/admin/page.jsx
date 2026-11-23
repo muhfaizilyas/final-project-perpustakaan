@@ -62,6 +62,14 @@ export default async function AdminDashboardPage() {
           <Link href="/dashboard/admin/user" className={tombol}>Kelola User</Link>
           <Link href="/dashboard/admin/kategori" className={tombol}>Kelola Kategori</Link>
           <Link href="/dashboard/pengumuman" className={tombol}>Kelola Pengumuman</Link>
+          <a href="/api/transaksi/export" className={tombol}>Ekspor Transaksi (CSV)</a>
+          <a
+            href="/api/transaksi/export?pemisah=titik-koma"
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            title="Pilih ini jika Excel membuka CSV dalam satu kolom (setelan regional Indonesia)"
+          >
+            CSV untuk Excel (;)
+          </a>
         </>
       }
     >

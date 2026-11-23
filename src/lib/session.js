@@ -39,7 +39,9 @@ export async function createSession(userId) {
   });
 }
 
-// Mengembalikan { userId } kalau cookie valid, selain itu null.
+// Mengembalikan { userId, iat } kalau cookie valid, selain itu null.
+// iat = detik Unix saat token dibuat; dipakai untuk mencabut sesi lama
+// setelah password diubah (lihat getCurrentUser di lib/auth.js).
 export async function getSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -49,7 +51,7 @@ export async function getSession() {
     const { payload } = await jwtVerify(token, getKey(), {
       algorithms: ["HS256"],
     });
-    return { userId: payload.userId };
+    return { userId: payload.userId, iat: payload.iat };
   } catch {
     return null; // token rusak / kedaluwarsa
   }

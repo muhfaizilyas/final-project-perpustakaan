@@ -8,6 +8,8 @@ import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import AksiForm from "@/components/AksiForm";
 import { ajukanPerpanjangan } from "@/actions/loan";
+import { tandaiSemuaDibaca } from "@/actions/notifikasi";
+import { TIPE_NOTIFIKASI } from "@/lib/notifikasi";
 
 export const metadata = { title: "Dashboard Mahasiswa" };
 
@@ -20,7 +22,7 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
   const user = await requireRole("mahasiswa");
   const { status } = await searchParams;
 
-  const [ringkasan, dipinjam, aktivitas, riwayat] = await Promise.all([
+  const [ringkasan, dipinjam, aktivitas, riwayat, notifikasi, jumlahBaru] = await Promise.all([
     pool.query(
       `SELECT
          COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam')::int      AS dipinjam,
@@ -64,8 +66,23 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
         ORDER BY l.tanggal_pengajuan DESC, l.id DESC`,
       [user.id]
     ),
+    pool.query(
+      `SELECT id, tipe, judul, pesan, sudah_dibaca,
+              (created_at AT TIME ZONE 'Asia/Jakarta')::date::text AS tanggal,
+              to_char(created_at AT TIME ZONE 'Asia/Jakarta', 'HH24:MI') AS jam
+         FROM notifications
+        WHERE user_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT 8`,
+      [user.id]
+    ),
+    pool.query(
+      "SELECT COUNT(*)::int AS jumlah FROM notifications WHERE user_id = $1 AND sudah_dibaca = FALSE",
+      [user.id]
+    ),
   ]);
   const r = ringkasan.rows[0];
+  const belumDibaca = jumlahBaru.rows[0].jumlah;
   const diblokir = Number(r.denda) > 0;
 
   const stats = [
@@ -101,6 +118,44 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((item) => <MetricCard key={item.label} {...item} />)}
+        </section>
+
+        <section id="notifikasi" className="scroll-mt-20 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                Notifikasi
+                {belumDibaca > 0 ? <StatusBadge tone="info">{belumDibaca} baru</StatusBadge> : null}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">Kabar terbaru soal pengajuan, pengembalian, dan denda kamu.</p>
+            </div>
+            {belumDibaca > 0 ? (
+              <AksiForm action={tandaiSemuaDibaca} id="semua" label="Tandai semua dibaca" variant="neutral" />
+            ) : null}
+          </div>
+          <div className="mt-5 space-y-3">
+            {notifikasi.rows.length === 0 ? (
+              <p className="rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">Belum ada notifikasi.</p>
+            ) : (
+              notifikasi.rows.map((n) => (
+                <div
+                  key={n.id}
+                  className={`rounded-2xl px-4 py-3 ${n.sudah_dibaca ? "bg-slate-50" : "border border-sky-200 bg-sky-50"}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge tone={TIPE_NOTIFIKASI[n.tipe]?.tone ?? "neutral"}>
+                        {TIPE_NOTIFIKASI[n.tipe]?.label ?? "Info"}
+                      </StatusBadge>
+                      <p className="font-semibold text-slate-900">{n.judul}</p>
+                    </div>
+                    <p className="text-xs text-slate-500">{formatTanggal(n.tanggal)} · {n.jam} WIB</p>
+                  </div>
+                  <p className="mt-1.5 text-sm text-slate-600">{n.pesan}</p>
+                </div>
+              ))
+            )}
+          </div>
         </section>
 
         <section id="pinjaman" className="grid scroll-mt-20 grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.85fr]">

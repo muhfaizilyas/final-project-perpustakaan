@@ -6,6 +6,8 @@ import pool from "@/lib/db";
 import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validateUlasan, validateAlasanTolak } from "@/lib/validation";
+import { buatNotifikasi } from "@/lib/notifikasi";
+import { formatRupiah, formatTanggal } from "@/lib/format";
 
 // Semua action mengembalikan { ok, message } (kecuali yang redirect).
 
@@ -162,7 +164,7 @@ export async function setujuiPinjam(prevState, formData) {
 
   const hasil = await dalamTransaksi(async (db) => {
     const { rows } = await db.query(
-      `SELECT l.status_pinjam, l.user_id, b.id AS book_id, b.stok_tersedia, b.durasi_maks_pinjam
+      `SELECT l.status_pinjam, l.user_id, b.id AS book_id, b.judul, b.stok_tersedia, b.durasi_maks_pinjam
          FROM loans l JOIN books b ON b.id = l.book_id
         WHERE l.id = $1
           FOR UPDATE OF l, b`,
@@ -186,15 +188,23 @@ export async function setujuiPinjam(prevState, formData) {
       "UPDATE books SET stok_tersedia = stok_tersedia - 1 WHERE id = $1",
       [row.book_id]
     );
-    await db.query(
+    const { rows: diperbarui } = await db.query(
       `UPDATE loans
           SET status_pinjam = 'Sedang Dipinjam',
               tanggal_pinjam = CURRENT_DATE,
               tanggal_jatuh_tempo = CURRENT_DATE + $2::int,
               processed_by = $3
-        WHERE id = $1`,
+        WHERE id = $1
+    RETURNING tanggal_jatuh_tempo::text AS jatuh_tempo`,
       [id, row.durasi_maks_pinjam, staf.id]
     );
+    await buatNotifikasi(db, {
+      userId: row.user_id,
+      loanId: id,
+      tipe: "pinjam_disetujui",
+      judul: "Peminjaman disetujui",
+      pesan: `Pengajuan pinjam "${row.judul}" disetujui. Ambil bukunya di meja sirkulasi dan kembalikan paling lambat ${formatTanggal(diperbarui[0].jatuh_tempo)}.`,
+    });
     return berhasil("Peminjaman disetujui.");
   });
 
@@ -211,16 +221,31 @@ export async function tolakPinjam(prevState, formData) {
   const pesanAlasan = validateAlasanTolak(alasan);
   if (pesanAlasan) return gagal(pesanAlasan);
 
-  const result = await pool.query(
-    `UPDATE loans
-        SET status_pinjam = 'Ditolak', alasan_penolakan = $2, processed_by = $3
-      WHERE id = $1 AND status_pinjam = 'Menunggu Konfirmasi'`,
-    [id, alasan, staf.id]
-  );
-  if (result.rowCount === 0) return gagal("Transaksi ini sudah diproses.");
+  // Status dan notifikasi disimpan bersama: keduanya berhasil atau keduanya batal.
+  const hasil = await dalamTransaksi(async (db) => {
+    const { rows } = await db.query(
+      `UPDATE loans l
+          SET status_pinjam = 'Ditolak', alasan_penolakan = $2, processed_by = $3
+         FROM books b
+        WHERE l.id = $1 AND l.status_pinjam = 'Menunggu Konfirmasi' AND b.id = l.book_id
+    RETURNING l.user_id, b.judul`,
+      [id, alasan, staf.id]
+    );
+    const row = rows[0];
+    if (!row) return gagal("Transaksi ini sudah diproses.");
 
-  segarkan();
-  return berhasil("Pengajuan ditolak.");
+    await buatNotifikasi(db, {
+      userId: row.user_id,
+      loanId: id,
+      tipe: "pinjam_ditolak",
+      judul: "Peminjaman ditolak",
+      pesan: `Pengajuan pinjam "${row.judul}" ditolak. Alasan: ${alasan}`,
+    });
+    return berhasil("Pengajuan ditolak.");
+  });
+
+  if (hasil.ok) segarkan();
+  return hasil;
 }
 
 // Pengembalian: Sedang Dipinjam -> Selesai, stok + 1, denda dihitung di backend
@@ -231,7 +256,7 @@ export async function konfirmasiKembali(prevState, formData) {
 
   const hasil = await dalamTransaksi(async (db) => {
     const { rows } = await db.query(
-      `SELECT l.status_pinjam, b.id AS book_id, b.denda_per_hari,
+      `SELECT l.status_pinjam, l.user_id, b.id AS book_id, b.judul, b.denda_per_hari,
               GREATEST(CURRENT_DATE - l.tanggal_jatuh_tempo, 0)::int AS hari_telat
          FROM loans l JOIN books b ON b.id = l.book_id
         WHERE l.id = $1
@@ -260,6 +285,26 @@ export async function konfirmasiKembali(prevState, formData) {
       "UPDATE books SET stok_tersedia = stok_tersedia + 1 WHERE id = $1",
       [row.book_id]
     );
+
+    await buatNotifikasi(db, {
+      userId: row.user_id,
+      loanId: id,
+      tipe: "buku_kembali",
+      judul: "Buku dikembalikan",
+      pesan:
+        denda > 0
+          ? `Pengembalian "${row.judul}" sudah dicatat, tetapi terlambat ${row.hari_telat} hari.`
+          : `Pengembalian "${row.judul}" sudah dicatat tepat waktu. Terima kasih!`,
+    });
+    if (denda > 0) {
+      await buatNotifikasi(db, {
+        userId: row.user_id,
+        loanId: id,
+        tipe: "denda",
+        judul: "Denda tertunggak",
+        pesan: `Kamu terkena denda ${formatRupiah(denda)} untuk "${row.judul}" (terlambat ${row.hari_telat} hari). Lunasi di meja sirkulasi sebelum meminjam lagi.`,
+      });
+    }
 
     return berhasil(
       denda > 0

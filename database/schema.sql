@@ -10,6 +10,7 @@
 -- File ini aman dijalankan ulang: semua tabel dihapus lalu dibuat lagi.
 -- =====================================================================
 
+DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS reviews       CASCADE;
 DROP TABLE IF EXISTS loans         CASCADE;
 DROP TABLE IF EXISTS announcements CASCADE;
@@ -31,7 +32,10 @@ CREATE TABLE users (
                      CHECK (role IN ('admin', 'pegawai', 'mahasiswa')),
     nomor_identitas  VARCHAR(30)  NOT NULL UNIQUE,   -- NIM / NIP
     is_active        BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at       TIMESTAMP    NOT NULL DEFAULT NOW()
+    created_at       TIMESTAMP    NOT NULL DEFAULT NOW(),
+    -- Waktu terakhir password diubah / direset. Sesi (cookie) yang dibuat
+    -- SEBELUM waktu ini dianggap tidak berlaku lagi. NULL = belum pernah diubah.
+    password_diubah_pada  TIMESTAMPTZ
 );
 
 -- ---------------------------------------------------------------------
@@ -177,3 +181,25 @@ CREATE TABLE reviews (
     komentar    VARCHAR(1000),   -- batas sama dengan validasi di backend
     created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- ---------------------------------------------------------------------
+-- 7. NOTIFICATIONS (pemberitahuan untuk mahasiswa)
+--    Diisi otomatis oleh backend saat: pengajuan pinjam disetujui / ditolak,
+--    buku dikembalikan, dan denda muncul. Ditampilkan di dashboard mahasiswa.
+--    loan_id dibiarkan NULL jika transaksinya sudah terhapus.
+-- ---------------------------------------------------------------------
+CREATE TABLE notifications (
+    id             SERIAL PRIMARY KEY,
+    user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    loan_id        INTEGER REFERENCES loans(id) ON DELETE SET NULL,
+    tipe           VARCHAR(30)  NOT NULL
+                   CHECK (tipe IN ('pinjam_disetujui', 'pinjam_ditolak',
+                                   'buku_kembali', 'denda')),
+    judul          VARCHAR(100) NOT NULL,
+    pesan          VARCHAR(1000) NOT NULL,
+    sudah_dibaca   BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user
+    ON notifications(user_id, sudah_dibaca, created_at DESC);

@@ -4,8 +4,8 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import pool from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/session";
-import { dashboardPath } from "@/lib/auth";
-import { validateLogin, validateRegister } from "@/lib/validation";
+import { dashboardPath, requireUser } from "@/lib/auth";
+import { validateLogin, validateRegister, validateUbahPassword } from "@/lib/validation";
 
 // Hash palsu (cost 10, sama dengan hash asli) untuk email yang tidak terdaftar.
 // Dengan begitu bcrypt.compare tetap berjalan dan waktu respons login sama,
@@ -108,4 +108,43 @@ export async function registerAction(prevState, formData) {
 export async function logoutAction() {
   await deleteSession();
   redirect("/login");
+}
+
+// Ubah password milik sendiri (semua peran). Dipakai lewat useActionState.
+// Setelah berhasil, password_diubah_pada diisi sehingga sesi di perangkat lain
+// otomatis tidak berlaku, lalu sesi perangkat ini dibuat ulang agar tetap masuk.
+export async function ubahPassword(prevState, formData) {
+  const user = await requireUser();
+
+  // Password tidak di-trim: spasi di awal/akhir adalah bagian dari password.
+  const password_lama = String(formData.get("password_lama") ?? "");
+  const password_baru = String(formData.get("password_baru") ?? "");
+  const konfirmasi = String(formData.get("konfirmasi") ?? "");
+
+  const errors = validateUbahPassword({ password_lama, password_baru, konfirmasi });
+  if (Object.keys(errors).length > 0) return { ok: false, errors, message: "" };
+
+  const { rows } = await pool.query("SELECT password FROM users WHERE id = $1", [user.id]);
+  const hashLama = rows[0]?.password;
+  // Untuk akun yang hilang di tengah jalan, tetap jalankan compare (waktu respons sama).
+  const cocok = await bcrypt.compare(password_lama, hashLama ?? HASH_DUMMY);
+  if (!hashLama || !cocok) {
+    return { ok: false, errors: { password_lama: "Password lama salah." }, message: "" };
+  }
+
+  const hash = await bcrypt.hash(password_baru, 10);
+  // Waktu diambil dari server aplikasi (dibulatkan ke detik) agar konsisten dengan
+  // iat token yang dibuat di server yang sama.
+  const sekarang = new Date(Math.floor(Date.now() / 1000) * 1000);
+  await pool.query(
+    "UPDATE users SET password = $1, password_diubah_pada = $2 WHERE id = $3",
+    [hash, sekarang, user.id]
+  );
+
+  await createSession(user.id);
+  return {
+    ok: true,
+    errors: {},
+    message: "Password berhasil diubah. Perangkat lain yang sedang masuk otomatis keluar.",
+  };
 }

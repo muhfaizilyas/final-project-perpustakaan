@@ -44,7 +44,7 @@ export default function UserForm({ action, mode = "baru", initial = {}, isSelf =
         <FormField label="Nomor identitas (NIM / NIP)" name="nomor_identitas" defaultValue={v.nomor_identitas} error={e.nomor_identitas} />
       )}
 
-      {!edit && (
+      {!edit ? (
         <FormField
           label="Password"
           name="password"
@@ -52,6 +52,15 @@ export default function UserForm({ action, mode = "baru", initial = {}, isSelf =
           autoComplete="new-password"
           error={e.password}
           helperText="Minimal 8 karakter. Disimpan sebagai hash, bukan teks asli."
+        />
+      ) : (
+        <FormField
+          label="Password baru (opsional)"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          error={e.password}
+          helperText="Kosongkan jika tidak ingin mengubah password. Jika diisi (8-72 karakter), user ini keluar dari semua perangkat."
         />
       )}
 

@@ -223,6 +223,49 @@ export function validateUserBaru(v) {
   return errors;
 }
 
+// password (opsional) = reset oleh admin. Kosong berarti password tidak diubah.
 export function validateUserEdit(v) {
-  return validasiDataUser(v);
+  const errors = validasiDataUser(v);
+  if (v.password) {
+    const pesan = pesanPasswordBaru(v.password);
+    if (pesan) errors.password = pesan;
+  }
+  return errors;
+}
+
+// ---------------------------------------------------------------------
+// Password: ubah sendiri & reset oleh admin
+// ---------------------------------------------------------------------
+// bcrypt hanya membaca 72 BYTE pertama. Huruf biasa = 1 byte, tapi emoji atau
+// huruf beraksen bisa 2-4 byte, jadi panjang dihitung dalam byte supaya
+// password tidak diam-diam terpotong.
+const PASSWORD_MIN = 8;
+const PASSWORD_MAKS_BYTE = 72;
+
+function pesanPasswordBaru(password) {
+  if (password.length < PASSWORD_MIN)
+    return `Password minimal ${PASSWORD_MIN} karakter.`;
+  if (new TextEncoder().encode(password).length > PASSWORD_MAKS_BYTE)
+    return `Password maksimal ${PASSWORD_MAKS_BYTE} karakter (emoji dan huruf beraksen dihitung lebih dari satu).`;
+  return "";
+}
+
+export function validateUbahPassword({ password_lama, password_baru, konfirmasi }) {
+  const errors = {};
+
+  if (!password_lama) errors.password_lama = "Password lama wajib diisi.";
+
+  if (!password_baru) errors.password_baru = "Password baru wajib diisi.";
+  else {
+    const pesan = pesanPasswordBaru(password_baru);
+    if (pesan) errors.password_baru = pesan;
+    else if (password_lama && password_baru === password_lama)
+      errors.password_baru = "Password baru tidak boleh sama dengan password lama.";
+  }
+
+  if (!konfirmasi) errors.konfirmasi = "Konfirmasi password wajib diisi.";
+  else if (password_baru !== konfirmasi)
+    errors.konfirmasi = "Konfirmasi password tidak sama.";
+
+  return errors;
 }

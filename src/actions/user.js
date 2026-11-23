@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
 import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
+import { createSession } from "@/lib/session";
 import { validateUserBaru, validateUserEdit } from "@/lib/validation";
 
 const LIST_URL = "/dashboard/admin/user";
@@ -97,7 +98,9 @@ export async function updateUser(id, prevState, formData) {
     values.is_active = String(lama.is_active);
   }
 
-  const errors = validateUserEdit(values);
+  // Reset password (opsional). Tidak di-trim; kosong = password tidak berubah.
+  const passwordBaru = String(formData.get("password") ?? "");
+  const errors = validateUserEdit({ ...values, password: passwordBaru });
 
   if (!errors.email) {
     const dup = await pool.query(
@@ -118,17 +121,35 @@ export async function updateUser(id, prevState, formData) {
   if (Object.keys(errors).length > 0) return { errors, message: "", values };
 
   try {
-    await pool.query(
-      `UPDATE users
-          SET nama_lengkap = $1, email = $2, role = $3, is_active = $4
-        WHERE id = $5`,
-      [values.nama_lengkap, values.email, values.role, values.is_active === "true", id]
-    );
+    if (passwordBaru) {
+      // Reset: simpan hash baru dan catat waktunya, sehingga semua sesi lama
+      // milik user itu otomatis tidak berlaku.
+      const hash = await bcrypt.hash(passwordBaru, 10);
+      const sekarang = new Date(Math.floor(Date.now() / 1000) * 1000);
+      await pool.query(
+        `UPDATE users
+            SET nama_lengkap = $1, email = $2, role = $3, is_active = $4,
+                password = $6, password_diubah_pada = $7
+          WHERE id = $5`,
+        [values.nama_lengkap, values.email, values.role, values.is_active === "true", id, hash, sekarang]
+      );
+    } else {
+      await pool.query(
+        `UPDATE users
+            SET nama_lengkap = $1, email = $2, role = $3, is_active = $4
+          WHERE id = $5`,
+        [values.nama_lengkap, values.email, values.role, values.is_active === "true", id]
+      );
+    }
   } catch (err) {
     const dup = errorDuplikat(err);
     if (dup) return { errors: dup, message: "", values };
     throw err;
   }
+
+  // Admin me-reset password akunnya sendiri: sesi lamanya ikut tercabut,
+  // jadi buat sesi baru agar tidak terlempar ke halaman login.
+  if (passwordBaru && lama.id === admin.id) await createSession(admin.id);
 
   revalidatePath("/", "layout");
   redirect(`${LIST_URL}?status=diubah`);
