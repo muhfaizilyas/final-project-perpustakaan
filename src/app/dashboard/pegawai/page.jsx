@@ -7,7 +7,7 @@ import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import AksiForm from "@/components/AksiForm";
-import { setujuiPinjam, tolakPinjam } from "@/actions/loan";
+import { setujuiPinjam, tolakPinjam } from "@/actions/peminjaman";
 
 export const metadata = { title: "Dashboard Pegawai" };
 

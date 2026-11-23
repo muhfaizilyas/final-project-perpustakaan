@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { requireRole } from "@/lib/auth";
 import { createSession } from "@/lib/session";
 import { validateUserBaru, validateUserEdit } from "@/lib/validation";

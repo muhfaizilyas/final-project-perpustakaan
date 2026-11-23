@@ -1,10 +1,10 @@
 import AppFrame from "@/components/AppFrame";
 import { KatalogPanel, PengumumanPanel } from "@/components/SectionPanels";
 
-// Untuk halaman yang boleh dibuka siapa saja (detail buku, pengumuman).
+// Untuk halaman detail yang boleh dibuka siapa saja (detail buku, detail pengumuman).
 // section = "katalog" atau "pengumuman"; user null berarti Guest.
 // aktif = penanda item aktif di panel kiri (lihat SectionPanels).
-export default function PageShell({ user, section = "katalog", aktif, title, subtitle, actions, children }) {
+export default function DetailShell({ user, section = "katalog", aktif, title, subtitle, actions, children }) {
   const panel =
     section === "pengumuman" ? (
       <PengumumanPanel user={user} aktif={aktif} />

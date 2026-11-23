@@ -7,7 +7,7 @@ import MetricCard from "@/components/MetricCard";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import AksiForm from "@/components/AksiForm";
-import { ajukanPerpanjangan } from "@/actions/loan";
+import { ajukanPerpanjangan } from "@/actions/peminjaman";
 import { tandaiSemuaDibaca } from "@/actions/notifikasi";
 import { TIPE_NOTIFIKASI } from "@/lib/notifikasi";
 import { batalkanReservasi } from "@/actions/reservasi";
@@ -34,7 +34,9 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
          COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam')::int      AS dipinjam,
          COUNT(*) FILTER (WHERE status_pinjam = 'Menunggu Konfirmasi')::int  AS menunggu,
          COUNT(*) FILTER (WHERE status_pinjam = 'Selesai')::int              AS selesai,
-         COALESCE(SUM(denda_nominal) FILTER (WHERE status_denda = 'Tertunggak'), 0) AS denda
+         COALESCE(SUM(denda_nominal) FILTER (WHERE status_denda = 'Tertunggak'), 0) AS denda,
+         COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam'
+                            AND tanggal_jatuh_tempo < CURRENT_DATE)::int AS telat
        FROM loans WHERE user_id = $1`,
       [user.id]
     ),
@@ -130,6 +132,12 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
           <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
             Kamu punya denda tertunggak sebesar <strong>{formatRupiah(r.denda)}</strong>.
             Pengajuan pinjam baru tidak dapat dilakukan sampai denda dilunasi.
+          </p>
+        ) : null}
+        {r.telat > 0 ? (
+          <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            Kamu masih memegang <strong>{r.telat}</strong> buku yang sudah lewat jatuh tempo.
+            Kembalikan ke meja sirkulasi; sampai saat itu pengajuan pinjam dan reservasi baru diblokir.
           </p>
         ) : null}
 
@@ -245,7 +253,7 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
                         Estimasi denda berjalan {formatRupiah(b.estimasi_denda)}
                       </p>
                     ) : null}
-                    {!["Perpanjangan Diajukan", "Perpanjangan Disetujui"].includes(b.status_perpanjangan) ? (
+                    {b.sisa_hari >= 0 && !["Perpanjangan Diajukan", "Perpanjangan Disetujui"].includes(b.status_perpanjangan) ? (
                       <div className="mt-4">
                         <AksiForm action={ajukanPerpanjangan} id={b.id} label="Ajukan Perpanjangan" variant="neutral" />
                       </div>

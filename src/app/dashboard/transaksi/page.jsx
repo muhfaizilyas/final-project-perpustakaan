@@ -1,3 +1,4 @@
+import { bersihkanKeyword } from "@/lib/pencarian";
 import Link from "next/link";
 import pool from "@/lib/db";
 import { requireRole } from "@/lib/auth";
@@ -9,7 +10,7 @@ import {
   lunasiDenda,
   setujuiPerpanjangan,
   tolakPerpanjangan,
-} from "@/actions/loan";
+} from "@/actions/peminjaman";
 import DashboardShell from "@/components/DashboardShell";
 import StatusBadge from "@/components/StatusBadge";
 import AksiForm from "@/components/AksiForm";
@@ -109,7 +110,7 @@ export default async function TransaksiPage({ searchParams }) {
   const user = await requireRole("admin", "pegawai");
   const { tab: tabParam = "antrean", q = "" } = await searchParams;
   const tab = Object.hasOwn(TAB, tabParam) ? tabParam : "antrean";
-  const keyword = String(q).trim();
+  const keyword = bersihkanKeyword(q);
   // Soal: pegawai yang memproses transaksi; admin hanya memantau.
   const bolehAksi = user.role === "pegawai";
 

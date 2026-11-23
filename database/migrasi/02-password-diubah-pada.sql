@@ -1,5 +1,5 @@
 -- =====================================================================
--- migrasi-password-diubah-pada.sql
+-- migrasi/02-password-diubah-pada.sql
 -- Untuk database yang SUDAH berjalan dengan schema.sql versi lama.
 -- (Database baru cukup menjalankan schema.sql terbaru + seed.sql.)
 --

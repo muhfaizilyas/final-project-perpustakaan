@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal, formatRupiah } from "@/lib/format";
-import PageShell from "@/components/PageShell";
+import DetailShell from "@/components/DetailShell";
 import StatusBadge from "@/components/StatusBadge";
 import CoverImage from "@/components/CoverImage";
 import EmptyState from "@/components/EmptyState";
 import AksiForm from "@/components/AksiForm";
-import { ajukanPinjam } from "@/actions/loan";
+import { ajukanPinjam } from "@/actions/peminjaman";
 import { buatReservasi, batalkanReservasi } from "@/actions/reservasi";
 import { sapuBukuMandiri, SQL_DICADANGKAN } from "@/lib/reservasi";
 
@@ -64,11 +64,13 @@ export default async function DetailBukuPage({ params }) {
     : null;
 
   // Status khusus mahasiswa: diblokir denda? sudah punya pengajuan/pinjaman aktif untuk buku ini?
-  let status = { diblokir: false, aktif: false, reservasi: null };
+  let status = { diblokir: false, telat: false, aktif: false, reservasi: null };
   if (user?.role === "mahasiswa") {
     const { rows } = await pool.query(
       `SELECT
          EXISTS (SELECT 1 FROM loans WHERE user_id = $1 AND status_denda = 'Tertunggak') AS diblokir,
+         EXISTS (SELECT 1 FROM loans WHERE user_id = $1 AND status_pinjam = 'Sedang Dipinjam'
+                  AND tanggal_jatuh_tempo < CURRENT_DATE) AS telat,
          EXISTS (SELECT 1 FROM loans WHERE user_id = $1 AND book_id = $2
                   AND status_pinjam IN ('Menunggu Konfirmasi', 'Sedang Dipinjam')) AS aktif`,
       [user.id, bukuId]
@@ -99,7 +101,7 @@ export default async function DetailBukuPage({ params }) {
   ];
 
   return (
-    <PageShell user={user} title="Detail Buku" subtitle="Informasi lengkap, ketersediaan, dan ulasan pembaca.">
+    <DetailShell user={user} title="Detail Buku" subtitle="Informasi lengkap, ketersediaan, dan ulasan pembaca.">
       <div className="space-y-8">
         <Link href="/katalog" className="text-sm font-semibold text-sky-600 hover:text-sky-700">
           &larr; Kembali ke katalog
@@ -160,6 +162,11 @@ export default async function DetailBukuPage({ params }) {
                   Kamu sudah punya pengajuan atau peminjaman aktif untuk buku ini.{" "}
                   <Link href="/dashboard/mahasiswa" className="font-semibold underline">Lihat dashboard</Link>
                 </p>
+              ) : status.telat ? (
+                <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                  Pengajuan pinjam diblokir karena kamu masih memegang buku yang sudah lewat jatuh tempo.
+                  Kembalikan dulu ke meja sirkulasi.
+                </p>
               ) : status.reservasi?.status === "Siap Diambil" ? (
                 <div className="space-y-3">
                   <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -215,6 +222,6 @@ export default async function DetailBukuPage({ params }) {
           </div>
         </section>
       </div>
-    </PageShell>
+    </DetailShell>
   );
 }

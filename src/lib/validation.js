@@ -1,14 +1,13 @@
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 
 // Ubah sesuai domain kampus di spesifikasi tugas kalau berbeda.
-export const DOMAIN_EMAIL_MAHASISWA = "@student.kampus.ac.id";
+const DOMAIN_EMAIL_MAHASISWA = "@student.kampus.ac.id";
 
 // Batas panjang input. Harus sama dengan tipe kolom di database/schema.sql,
 // kalau tidak PostgreSQL menolak dengan error "value too long" (halaman crash).
-export const BATAS = {
+const BATAS = {
   nama: 100,
   email: 100,
-  password: 72, // bcrypt hanya membaca 72 byte pertama
   komentar: 1000,
   alasan: 500,
 };
@@ -50,10 +49,8 @@ export function validateRegister({
     errors.nomor_identitas = "NIM harus berupa angka (5-20 digit).";
 
   if (!password) errors.password = "Password wajib diisi.";
-  else if (password.length < 8)
-    errors.password = "Password minimal 8 karakter.";
-  else if (password.length > BATAS.password)
-    errors.password = `Password maksimal ${BATAS.password} karakter.`;
+  else if (pesanPasswordBaru(password))
+    errors.password = pesanPasswordBaru(password);
 
   if (!konfirmasi) errors.konfirmasi = "Konfirmasi password wajib diisi.";
   else if (password !== konfirmasi)
@@ -217,8 +214,7 @@ export function validateUserBaru(v) {
     errors.nomor_identitas = "Nomor identitas 3-30 karakter, hanya huruf dan angka.";
 
   if (!v.password) errors.password = "Password wajib diisi.";
-  else if (v.password.length < 8) errors.password = "Password minimal 8 karakter.";
-  else if (v.password.length > 72) errors.password = "Password maksimal 72 karakter.";
+  else if (pesanPasswordBaru(v.password)) errors.password = pesanPasswordBaru(v.password);
 
   return errors;
 }

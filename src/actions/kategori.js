@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { requireRole } from "@/lib/auth";
 import { validateKategori } from "@/lib/validation";
 

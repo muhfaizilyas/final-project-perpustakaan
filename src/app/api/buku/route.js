@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
+import { bersihkanKeyword } from "@/lib/pencarian";
 import { SQL_STOK_BEBAS } from "@/lib/reservasi";
 
 // GET /api/buku?q=clean&kategori=1
 // Data katalog bersifat publik (sama dengan halaman /katalog), jadi tanpa login.
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const q = (searchParams.get("q") ?? "").trim();
+  const q = bersihkanKeyword(searchParams.get("q"));
   const kategori = searchParams.get("kategori") ?? "";
   const kategoriId = parseId(kategori);
 

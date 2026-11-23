@@ -1,6 +1,6 @@
 -- =====================================================================
--- migrasi-reservasi.sql
--- Untuk database yang SUDAH berjalan. Jalankan SETELAH migrasi-notifikasi.sql.
+-- migrasi/04-reservasi.sql
+-- Untuk database yang SUDAH berjalan. Jalankan SETELAH 03-notifikasi.sql.
 -- (Database baru cukup menjalankan schema.sql terbaru + seed.sql.)
 --
 -- 1. Membuat tabel reservations (antrean buku yang stoknya habis).

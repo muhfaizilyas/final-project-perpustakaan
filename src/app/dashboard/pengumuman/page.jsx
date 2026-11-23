@@ -1,3 +1,4 @@
+import { bersihkanKeyword } from "@/lib/pencarian";
 import Link from "next/link";
 import pool from "@/lib/db";
 import { requireRole } from "@/lib/auth";
@@ -21,7 +22,7 @@ export default async function PengumumanAdminPage({ searchParams }) {
   const user = await requireRole("admin", "pegawai");
   const { status, q = "", publikasi = "" } = await searchParams;
 
-  const keyword = String(q).trim();
+  const keyword = bersihkanKeyword(q);
   // Nilai filter dari URL dicek ke daftar tetap sebelum dipakai di query.
   const filterStatus = STATUS_PENGUMUMAN.includes(publikasi) ? publikasi : "";
 

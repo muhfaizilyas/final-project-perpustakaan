@@ -3,9 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { requireRole } from "@/lib/auth";
 import { jalankanTransaksi, sapuBuku, SQL_DICADANGKAN } from "@/lib/reservasi";
+import { cekBlokir, pesanBlokir } from "@/lib/blokir";
 
 const gagal = (message) => ({ ok: false, message });
 const berhasil = (message) => ({ ok: true, message });
@@ -29,13 +30,8 @@ export async function buatReservasi(prevState, formData) {
     if (!buku) return gagal("Buku tidak ditemukan.");
 
     // Aturan blokir yang sama dengan peminjaman.
-    const { rows: denda } = await db.query(
-      `SELECT 1 FROM loans WHERE user_id = $1 AND status_denda = 'Tertunggak' LIMIT 1`,
-      [user.id]
-    );
-    if (denda.length > 0) {
-      return gagal("Kamu masih punya denda tertunggak. Lunasi dulu sebelum reservasi.");
-    }
+    const blokir = await cekBlokir(db, user.id);
+    if (blokir.alasan) return gagal(pesanBlokir(blokir, "reservasi"));
 
     const { rows: aktif } = await db.query(
       `SELECT 1 FROM loans

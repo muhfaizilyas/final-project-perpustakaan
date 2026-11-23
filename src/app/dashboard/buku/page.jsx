@@ -1,6 +1,7 @@
+import { bersihkanKeyword } from "@/lib/pencarian";
 import Link from "next/link";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { requireRole } from "@/lib/auth";
 import DashboardShell from "@/components/DashboardShell";
 import HapusBukuButton from "@/components/HapusBukuButton";
@@ -20,7 +21,7 @@ export default async function BukuPage({ searchParams }) {
   const { status, q = "", kategori = "" } = await searchParams;
 
   const kategoriId = parseId(kategori);
-  const keyword = String(q).trim();
+  const keyword = bersihkanKeyword(q);
 
   const [{ rows: buku }, { rows: daftarKategori }] = await Promise.all([
     pool.query(

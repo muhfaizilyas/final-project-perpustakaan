@@ -52,6 +52,9 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - Kategori dengan nama atau kode yang sama ditolak; kategori yang masih memiliki buku tidak dapat dihapus.
 - Stok buku berubah di dalam transaksi SQL (`BEGIN` / `COMMIT`) saat peminjaman disetujui atau buku dikembalikan.
 - Mahasiswa dengan denda berstatus *Tertunggak* tidak dapat mengajukan peminjaman baru.
+- Mahasiswa yang masih memegang buku **lewat jatuh tempo** (belum dikembalikan) juga tidak dapat mengajukan pinjam atau reservasi baru. Denda baru tercatat saat buku dikembalikan, jadi tanpa aturan ini mahasiswa yang sedang telat masih bisa meminjam buku lain. Aturannya ada di satu tempat: `src/lib/blokir.js`.
+- Perpanjangan tidak dapat diajukan untuk buku yang sudah lewat jatuh tempo (harus dikembalikan) atau yang sedang diantre mahasiswa lain.
+- Pencarian membuang karakter NUL dan membatasi kata kunci 100 karakter.
 - User tidak dapat dihapus jika masih punya transaksi aktif atau denda tertunggak; admin tidak dapat menghapus atau mengubah role/status akunnya sendiri.
 
 ## Ubah Password, Ekspor CSV, dan Notifikasi
@@ -60,7 +63,7 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - **Reset oleh admin**: form edit user punya kolom opsional "Password baru". Kosong = password tidak berubah.
 - **Cabut sesi lama**: kolom `users.password_diubah_pada` diisi saat password diubah / direset. Token sesi yang dibuat sebelum waktu itu ditolak, jadi perangkat lain otomatis keluar. Perangkat yang dipakai untuk mengubah tetap masuk.
 - **Ekspor CSV**: `GET /api/transaksi/export` (hanya admin; 401 jika belum login, 403 jika bukan admin). Berisi seluruh transaksi dan rekap denda di bawahnya. File memakai penanda UTF-8 (BOM), dan sel teks yang diawali `=`, `+`, `-`, `@` diberi awalan `'` agar tidak dijalankan sebagai rumus. Jika Excel (setelan regional Indonesia) membuka CSV dalam satu kolom, pakai `?pemisah=titik-koma` (tombol "CSV untuk Excel" di dashboard admin).
-- **Notifikasi**: tabel `notifications` terisi otomatis dari `src/actions/loan.js` (dalam transaksi SQL yang sama dengan perubahan statusnya) dan tampil di dashboard mahasiswa. Belum ada pengingat H-1.
+- **Notifikasi**: tabel `notifications` terisi otomatis dari `src/actions/peminjaman.js` (dalam transaksi SQL yang sama dengan perubahan statusnya) dan tampil di dashboard mahasiswa. Belum ada pengingat H-1.
 
 ## Reservasi Buku
 
@@ -103,17 +106,23 @@ npm install
 
    `schema.sql` dapat dijalankan ulang kapan saja (menghapus dan membuat ulang semua tabel).
 
-   **Database yang sudah berjalan** cukup menjalankan dua file migrasi berikut (aman dijalankan ulang, data tidak berubah):
+   **Database yang sudah berisi data** tidak perlu dibuat ulang: jalankan empat file di `database/migrasi/` sesuai urutan nomornya (aman dijalankan ulang, data tidak berubah):
 
    ```bash
-   psql -U postgres -d perpustakaan -f database/migrasi-password-diubah-pada.sql
-   psql -U postgres -d perpustakaan -f database/migrasi-notifikasi.sql
-   psql -U postgres -d perpustakaan -f database/migrasi-reservasi.sql
+   psql -U postgres -d perpustakaan -f database/migrasi/01-batas-panjang.sql
+   psql -U postgres -d perpustakaan -f database/migrasi/02-password-diubah-pada.sql
+   psql -U postgres -d perpustakaan -f database/migrasi/03-notifikasi.sql
+   psql -U postgres -d perpustakaan -f database/migrasi/04-reservasi.sql
    ```
 
-   Jalankan sesuai urutan itu. `migrasi-reservasi.sql` membuat tabel `reservations` dan menambah dua tipe notifikasi baru.
+   | File | Isi |
+   |---|---|
+   | `01-batas-panjang.sql` | membatasi komentar ulasan (1000) dan alasan penolakan (500) |
+   | `02-password-diubah-pada.sql` | kolom `users.password_diubah_pada` untuk mencabut sesi lama |
+   | `03-notifikasi.sql` | tabel `notifications` |
+   | `04-reservasi.sql` | tabel `reservations` dan dua tipe notifikasi reservasi |
 
-   Aplikasi versi ini **wajib** memakai ketiga migrasi tersebut, kalau tidak login dan proses peminjaman akan error.
+   Database baru yang memakai `schema.sql` terbaru **tidak** membutuhkan migrasi. Tanpa migrasi pada database lama, login dan proses peminjaman akan error.
 
 ### 4. Konfigurasi environment
 
@@ -148,20 +157,25 @@ Buka <http://localhost:3000>. Restart server setiap kali `.env.local` diubah.
 | Pegawai | `pegawai1@kampus.ac.id` | `pegawai123` |
 | Mahasiswa | `budi@student.kampus.ac.id` | `mahasiswa123` |
 
-Akun `andi@student.kampus.ac.id` (password `mahasiswa123`) sengaja memiliki denda *Tertunggak* untuk menguji pemblokiran peminjaman.
+Dua akun lain sengaja dibuat untuk menguji pemblokiran peminjaman (password sama, `mahasiswa123`):
+
+- `andi@student.kampus.ac.id` memiliki denda *Tertunggak*.
+- `siti@student.kampus.ac.id` sedang memegang buku yang lewat jatuh tempo.
 
 ## Struktur Folder
 
 ```
-database/          schema.sql, seed.sql, dan file migrasi (di luar folder app)
+database/          schema.sql, seed.sql (di luar folder app)
+  migrasi/         01-04: hanya untuk database lama yang sudah berisi data
 src/
-  actions/         Server Actions (auth, kategori, buku, loan, notifikasi, pengumuman, reservasi, user)
+  actions/         Server Actions (auth, kategori, buku, peminjaman, notifikasi, pengumuman, reservasi, user)
   app/             halaman dan route (App Router)
     login/ register/
     katalog/ buku/[id]/ pengumuman/ pengumuman/[id]/   halaman publik
-    dashboard/     admin/ pegawai/ mahasiswa/ buku/ transaksi/ pengumuman/
-  components/      komponen UI (form, tombol, ...)
-  lib/             db.js (pool PostgreSQL), session.js, auth.js, validation.js, csv.js, notifikasi.js, reservasi.js
+    dashboard/     admin/ pegawai/ mahasiswa/ buku/ transaksi/ pengumuman/ ubah-password/
+    api/           buku (pencarian JSON), transaksi/export (CSV, admin)
+  components/      komponen UI (form, tombol, kerangka halaman, ...)
+  lib/             db, session, auth, validation, parseId, pencarian, blokir, csv, notifikasi, reservasi, format, katalog, navigation
 ```
 
 ## Catatan Keamanan
@@ -170,4 +184,7 @@ src/
 - Password tidak pernah disimpan sebagai teks asli (hash bcrypt).
 - Ekspor CSV hanya untuk admin dan dicek di server; sel CSV yang berawalan rumus diamankan.
 - Setiap Server Action memeriksa role pengguna sendiri, tidak hanya mengandalkan guard halaman.
+- Password diperiksa dalam byte (batas bcrypt 72 byte), jadi emoji tidak terpotong diam-diam.
+- Header keamanan dasar dipasang di `next.config.mjs` (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`); header `X-Powered-By` dimatikan.
+- Belum ada pembatasan percobaan login dan pengingat jatuh tempo H-1.
 - File `.env.local` tidak ikut di-commit.

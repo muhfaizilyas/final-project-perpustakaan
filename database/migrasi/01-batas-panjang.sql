@@ -1,5 +1,5 @@
 -- =====================================================================
--- migrasi-batas-panjang.sql
+-- migrasi/01-batas-panjang.sql
 -- Untuk database yang SUDAH berjalan dengan schema.sql versi lama.
 -- (Database baru cukup menjalankan schema.sql terbaru + seed.sql.)
 --

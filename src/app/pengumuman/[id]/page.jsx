@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
 import AppFrame from "@/components/AppFrame";

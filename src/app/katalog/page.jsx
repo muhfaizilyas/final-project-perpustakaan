@@ -1,3 +1,4 @@
+import { bersihkanKeyword } from "@/lib/pencarian";
 import Link from "next/link";
 import pool from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
@@ -5,7 +6,7 @@ import AppFrame from "@/components/AppFrame";
 import Ikon from "@/components/Ikon";
 import { KatalogPanel } from "@/components/SectionPanels";
 import { buatHref } from "@/lib/katalog";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import BookCover from "@/components/BookCover";
 import BookDetailPanel from "@/components/BookDetailPanel";
 import DetailScroll from "@/components/DetailScroll";
@@ -34,7 +35,7 @@ export default async function KatalogPage({ searchParams }) {
   const user = await getCurrentUser();
   const { q = "", kategori = "", sort = "judul", pilih = "" } = await searchParams;
 
-  const keyword = String(q).trim();
+  const keyword = bersihkanKeyword(q);
   const kategoriId = parseId(kategori);
   const urutan = Object.hasOwn(URUTAN, sort) ? sort : "judul";
   const pilihId = parseId(pilih);

@@ -9,7 +9,7 @@ const BOM = "\uFEFF";
 const AWAL_RUMUS = /^[=+\-@\t\r]/;
 
 // Satu sel teks. Angka murni sebaiknya lewat sel() dengan tipe number.
-export function sel(nilai, pemisah = ",") {
+function sel(nilai, pemisah = ",") {
   if (nilai === null || nilai === undefined) return "";
 
   // Angka asli (mis. nominal denda) ditulis apa adanya; nilai negatif pun bukan rumus.

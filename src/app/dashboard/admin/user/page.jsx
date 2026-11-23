@@ -1,3 +1,4 @@
+import { bersihkanKeyword } from "@/lib/pencarian";
 import Link from "next/link";
 import pool from "@/lib/db";
 import { requireRole } from "@/lib/auth";
@@ -23,7 +24,7 @@ export default async function UserPage({ searchParams }) {
   const admin = await requireRole("admin");
   const { status, q = "", role = "" } = await searchParams;
 
-  const keyword = String(q).trim();
+  const keyword = bersihkanKeyword(q);
   // Nilai filter dari URL dicek ke daftar tetap sebelum dipakai di query.
   const filterRole = ROLE_USER.includes(role) ? role : "";
 

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { requireRole } from "@/lib/auth";
 import { updateUser } from "@/actions/user";
 import UserForm from "@/components/UserForm";

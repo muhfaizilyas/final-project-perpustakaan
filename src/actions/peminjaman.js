@@ -3,12 +3,13 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
-import { parseId } from "@/lib/id";
+import { parseId } from "@/lib/parseId";
 import { requireRole } from "@/lib/auth";
 import { validateUlasan, validateAlasanTolak } from "@/lib/validation";
 import { buatNotifikasi } from "@/lib/notifikasi";
 import { sapuBuku, sapuBukuMandiri, SQL_DICADANGKAN, HARI_AMBIL } from "@/lib/reservasi";
 import { formatRupiah, formatTanggal } from "@/lib/format";
+import { cekBlokir, pesanBlokir } from "@/lib/blokir";
 
 // Semua action mengembalikan { ok, message } (kecuali yang redirect).
 
@@ -77,10 +78,9 @@ export async function ajukanPinjam(prevState, formData) {
     return gagal("Stok sedang dicadangkan untuk mahasiswa yang antre. Kamu bisa ikut reservasi.");
   }
 
-  // Aturan blokir: masih ada denda Tertunggak -> tidak boleh pinjam baru
-  if ((await totalDendaTertunggak(pool, user.id)) > 0) {
-    return gagal("Kamu masih punya denda tertunggak. Lunasi dulu sebelum meminjam lagi.");
-  }
+  // Aturan blokir: denda Tertunggak, atau masih memegang buku yang telat.
+  const blokir = await cekBlokir(pool, user.id);
+  if (blokir.alasan) return gagal(pesanBlokir(blokir));
 
   try {
     await pool.query(
@@ -115,8 +115,12 @@ export async function ajukanPerpanjangan(prevState, formData) {
   if (!id) return gagal("ID transaksi tidak valid.");
 
   const { rows } = await pool.query(
-    `SELECT status_pinjam, status_perpanjangan
-       FROM loans WHERE id = $1 AND user_id = $2`,
+    `SELECT l.status_pinjam, l.status_perpanjangan,
+            l.tanggal_jatuh_tempo < CURRENT_DATE AS telat,
+            EXISTS (SELECT 1 FROM reservations rv
+                     WHERE rv.book_id = l.book_id
+                       AND rv.status IN ('Menunggu', 'Siap Diambil')) AS ada_antrean
+       FROM loans l WHERE l.id = $1 AND l.user_id = $2`,
     [id, user.id]
   );
   const loan = rows[0];
@@ -127,6 +131,13 @@ export async function ajukanPerpanjangan(prevState, formData) {
     return gagal("Perpanjangan sedang menunggu persetujuan pegawai.");
   if (loan.status_perpanjangan === "Perpanjangan Disetujui")
     return gagal("Perpanjangan hanya bisa dilakukan satu kali per peminjaman.");
+  // Buku yang sudah lewat jatuh tempo harus dikembalikan, bukan diperpanjang
+  // (kalau tidak, denda keterlambatan bisa dihindari).
+  if (loan.telat)
+    return gagal("Buku ini sudah lewat jatuh tempo. Kembalikan ke meja sirkulasi, perpanjangan tidak bisa diajukan.");
+  // Ada mahasiswa lain yang antre untuk buku ini.
+  if (loan.ada_antrean)
+    return gagal("Perpanjangan tidak bisa diajukan karena ada mahasiswa lain yang mengantre buku ini.");
 
   await pool.query(
     `UPDATE loans SET status_perpanjangan = 'Perpanjangan Diajukan'

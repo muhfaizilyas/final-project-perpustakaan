@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { kirimUlasan } from "@/actions/loan";
+import { kirimUlasan } from "@/actions/peminjaman";
 
 export default function UlasanForm({ loanId }) {
   const [state, formAction, pending] = useActionState(kirimUlasan, {
