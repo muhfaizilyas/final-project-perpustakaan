@@ -62,7 +62,7 @@ export default function BookDetailPanel({ b }) {
         href={`/buku/${b.id}`}
         className="block w-full rounded-[7px] bg-[#3869e0] p-[11px] text-center font-semibold !text-white hover:bg-[#2f5bc7]"
       >
-        {b.stok_tersedia > 0 ? "Lihat detail & ajukan pinjam" : "Lihat detail buku"}
+        {b.stok_tersedia > 0 ? "Lihat detail & ajukan pinjam" : "Lihat detail & reservasi"}
       </Link>
     </>
   );

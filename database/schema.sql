@@ -10,6 +10,7 @@
 -- File ini aman dijalankan ulang: semua tabel dihapus lalu dibuat lagi.
 -- =====================================================================
 
+DROP TABLE IF EXISTS reservations  CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS reviews       CASCADE;
 DROP TABLE IF EXISTS loans         CASCADE;
@@ -194,7 +195,8 @@ CREATE TABLE notifications (
     loan_id        INTEGER REFERENCES loans(id) ON DELETE SET NULL,
     tipe           VARCHAR(30)  NOT NULL
                    CHECK (tipe IN ('pinjam_disetujui', 'pinjam_ditolak',
-                                   'buku_kembali', 'denda')),
+                                   'buku_kembali', 'denda',
+                                   'reservasi_siap', 'reservasi_kedaluwarsa')),
     judul          VARCHAR(100) NOT NULL,
     pesan          VARCHAR(1000) NOT NULL,
     sudah_dibaca   BOOLEAN      NOT NULL DEFAULT FALSE,
@@ -203,3 +205,39 @@ CREATE TABLE notifications (
 
 CREATE INDEX idx_notifications_user
     ON notifications(user_id, sudah_dibaca, created_at DESC);
+
+-- ---------------------------------------------------------------------
+-- 8. RESERVATIONS (antrean buku yang stoknya habis)
+--
+--  status:
+--    Menunggu     -> ikut antrean (urut created_at, id)
+--    Siap Diambil -> satu eksemplar dicadangkan untuknya sampai batas_ambil
+--                    (dipicu saat buku dikembalikan / reservasi lain batal / kedaluwarsa)
+--    Terpenuhi    -> pengajuan pinjamnya disetujui pegawai (loan_id terisi)
+--    Dibatalkan   -> dibatalkan mahasiswa
+--    Kedaluwarsa  -> lewat batas_ambil tanpa diproses, giliran pindah ke antrean berikutnya
+--
+--  Eksemplar yang dicadangkan TIDAK mengurangi books.stok_tersedia; backend
+--  menghitung stok bebas = stok_tersedia - jumlah reservasi 'Siap Diambil'.
+--  Satu mahasiswa hanya boleh punya satu reservasi aktif per buku.
+-- ---------------------------------------------------------------------
+CREATE TABLE reservations (
+    id           SERIAL PRIMARY KEY,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    book_id      INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    status       VARCHAR(20) NOT NULL DEFAULT 'Menunggu'
+                 CHECK (status IN ('Menunggu', 'Siap Diambil', 'Terpenuhi',
+                                   'Dibatalkan', 'Kedaluwarsa')),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    siap_pada    TIMESTAMPTZ,
+    batas_ambil  DATE,
+    loan_id      INTEGER REFERENCES loans(id) ON DELETE SET NULL,
+    CHECK (status <> 'Siap Diambil' OR batas_ambil IS NOT NULL)
+);
+
+CREATE INDEX idx_reservations_antrean ON reservations(book_id, status, created_at);
+CREATE INDEX idx_reservations_user    ON reservations(user_id);
+
+CREATE UNIQUE INDEX uq_reservations_aktif
+    ON reservations(user_id, book_id)
+    WHERE status IN ('Menunggu', 'Siap Diambil');

@@ -10,6 +10,8 @@ import CoverImage from "@/components/CoverImage";
 import EmptyState from "@/components/EmptyState";
 import AksiForm from "@/components/AksiForm";
 import { ajukanPinjam } from "@/actions/loan";
+import { buatReservasi, batalkanReservasi } from "@/actions/reservasi";
+import { sapuBukuMandiri, SQL_DICADANGKAN } from "@/lib/reservasi";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -26,10 +28,16 @@ export default async function DetailBukuPage({ params }) {
 
   const user = await getCurrentUser();
 
+  // Rapikan antrean reservasi (kedaluwarsa / giliran berikutnya) sebelum menampilkan stok.
+  await sapuBukuMandiri(bukuId);
+
   const [buku, ulasan] = await Promise.all([
     pool.query(
       `SELECT b.id, b.judul, b.isbn, b.pengarang, b.penerbit, b.tahun_terbit,
               b.stok_total, b.stok_tersedia, b.durasi_maks_pinjam, b.denda_per_hari, b.cover_url,
+              ${SQL_DICADANGKAN} AS dicadangkan,
+              (SELECT COUNT(*)::int FROM reservations rv
+                WHERE rv.book_id = b.id AND rv.status = 'Menunggu') AS antrean,
               c.nama AS kategori
          FROM books b JOIN categories c ON c.id = b.category_id
         WHERE b.id = $1`,
@@ -48,13 +56,15 @@ export default async function DetailBukuPage({ params }) {
   if (buku.rows.length === 0) notFound();
 
   const b = buku.rows[0];
+  // Stok yang benar-benar bisa dipinjam = stok tersedia dikurangi yang dicadangkan untuk antrean.
+  const stokBebas = Math.max(b.stok_tersedia - b.dicadangkan, 0);
   const reviews = ulasan.rows;
   const rataRata = reviews.length
     ? (reviews.reduce((jumlah, r) => jumlah + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
   // Status khusus mahasiswa: diblokir denda? sudah punya pengajuan/pinjaman aktif untuk buku ini?
-  let status = { diblokir: false, aktif: false };
+  let status = { diblokir: false, aktif: false, reservasi: null };
   if (user?.role === "mahasiswa") {
     const { rows } = await pool.query(
       `SELECT
@@ -63,7 +73,19 @@ export default async function DetailBukuPage({ params }) {
                   AND status_pinjam IN ('Menunggu Konfirmasi', 'Sedang Dipinjam')) AS aktif`,
       [user.id, bukuId]
     );
-    status = rows[0];
+    status = { ...rows[0], reservasi: null };
+
+    // Reservasi aktif milik mahasiswa ini untuk buku ini (kalau ada), lengkap dengan urutan antrean.
+    const { rows: rsv } = await pool.query(
+      `SELECT r.id, r.status, r.batas_ambil::text AS batas_ambil,
+              (SELECT COUNT(*)::int FROM reservations x
+                WHERE x.book_id = r.book_id AND x.status = 'Menunggu'
+                  AND (x.created_at, x.id) <= (r.created_at, r.id)) AS urutan
+         FROM reservations r
+        WHERE r.user_id = $1 AND r.book_id = $2 AND r.status IN ('Menunggu', 'Siap Diambil')`,
+      [user.id, bukuId]
+    );
+    status.reservasi = rsv[0] ?? null;
   }
 
   const info = [
@@ -86,7 +108,7 @@ export default async function DetailBukuPage({ params }) {
         <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="relative flex min-h-64 flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 p-6 text-white shadow-sm">
             <CoverImage src={b.cover_url} alt={`Sampul ${b.judul}`} />
-            <div className="relative"><StatusBadge status={b.stok_tersedia > 0 ? "Tersedia" : "Stok habis"} /></div>
+            <div className="relative"><StatusBadge status={stokBebas > 0 ? "Tersedia" : "Stok habis"} /></div>
             <div className="relative">
               <p className="text-[11px] uppercase tracking-[0.24em] text-white/75">RakBaca</p>
               <h2 className="mt-2 break-words text-2xl font-black leading-tight">{b.judul}</h2>
@@ -96,9 +118,15 @@ export default async function DetailBukuPage({ params }) {
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              <StatusBadge tone={b.stok_tersedia > 0 ? "success" : "danger"}>
-                Stok tersedia {b.stok_tersedia} dari {b.stok_total}
+              <StatusBadge tone={stokBebas > 0 ? "success" : "danger"}>
+                Stok tersedia {stokBebas} dari {b.stok_total}
               </StatusBadge>
+              {b.dicadangkan > 0 ? (
+                <StatusBadge tone="warning">{b.dicadangkan} dicadangkan untuk antrean</StatusBadge>
+              ) : null}
+              {b.antrean > 0 ? (
+                <span className="text-sm text-slate-500">{b.antrean} orang mengantre</span>
+              ) : null}
               {rataRata ? (
                 <span className="text-sm font-semibold text-amber-600">★ {rataRata} ({reviews.length} ulasan)</span>
               ) : (
@@ -132,10 +160,31 @@ export default async function DetailBukuPage({ params }) {
                   Kamu sudah punya pengajuan atau peminjaman aktif untuk buku ini.{" "}
                   <Link href="/dashboard/mahasiswa" className="font-semibold underline">Lihat dashboard</Link>
                 </p>
-              ) : b.stok_tersedia <= 0 ? (
-                <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  Stok sedang habis, belum bisa dipinjam.
-                </p>
+              ) : status.reservasi?.status === "Siap Diambil" ? (
+                <div className="space-y-3">
+                  <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    Giliranmu! Satu eksemplar sudah dicadangkan untukmu. Ajukan peminjaman sebelum{" "}
+                    <strong>{formatTanggal(status.reservasi.batas_ambil)}</strong>, kalau tidak giliranmu pindah ke antrean berikutnya.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <AksiForm action={ajukanPinjam} id={b.id} label="Ajukan Pinjam" variant="dark" large />
+                    <AksiForm action={batalkanReservasi} id={status.reservasi.id} label="Batalkan Reservasi" variant="neutral" large confirmText="Batalkan reservasi ini?" />
+                  </div>
+                </div>
+              ) : status.reservasi?.status === "Menunggu" ? (
+                <div className="space-y-3">
+                  <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+                    Kamu ada di antrean ke-<strong>{status.reservasi.urutan}</strong>. Kamu akan diberi tahu lewat notifikasi saat bukunya siap.
+                  </p>
+                  <AksiForm action={batalkanReservasi} id={status.reservasi.id} label="Batalkan Reservasi" variant="neutral" large confirmText="Keluar dari antrean?" />
+                </div>
+              ) : stokBebas <= 0 ? (
+                <div className="space-y-3">
+                  <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    Stok sedang habis. Ikut antrean reservasi, nanti kamu diberi tahu saat bukunya kembali.
+                  </p>
+                  <AksiForm action={buatReservasi} id={b.id} label="Reservasi Buku" variant="primary" large />
+                </div>
               ) : (
                 <AksiForm action={ajukanPinjam} id={b.id} label="Ajukan Pinjam" variant="dark" large />
               )}

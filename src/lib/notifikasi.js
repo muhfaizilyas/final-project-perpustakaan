@@ -5,6 +5,8 @@ export const TIPE_NOTIFIKASI = {
   pinjam_ditolak: { label: "Ditolak", tone: "danger" },
   buku_kembali: { label: "Dikembalikan", tone: "info" },
   denda: { label: "Denda", tone: "warning" },
+  reservasi_siap: { label: "Reservasi", tone: "success" },
+  reservasi_kedaluwarsa: { label: "Kedaluwarsa", tone: "warning" },
 };
 
 // `db` boleh pool (query biasa) atau client transaksi. Kalau dipanggil di dalam

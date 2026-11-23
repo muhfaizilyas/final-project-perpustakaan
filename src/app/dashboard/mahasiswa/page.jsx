@@ -10,19 +10,25 @@ import AksiForm from "@/components/AksiForm";
 import { ajukanPerpanjangan } from "@/actions/loan";
 import { tandaiSemuaDibaca } from "@/actions/notifikasi";
 import { TIPE_NOTIFIKASI } from "@/lib/notifikasi";
+import { batalkanReservasi } from "@/actions/reservasi";
+import { sapuSemuaAntrean } from "@/lib/reservasi";
 
 export const metadata = { title: "Dashboard Mahasiswa" };
 
 const PESAN = {
   diajukan: "Pengajuan peminjaman terkirim. Tunggu konfirmasi pegawai di meja sirkulasi.",
   ulasan: "Terima kasih, ulasanmu sudah tersimpan.",
+  reservasi: "Reservasi dibuat. Kamu akan diberi tahu lewat notifikasi saat bukunya siap diambil.",
 };
 
 export default async function MahasiswaDashboardPage({ searchParams }) {
   const user = await requireRole("mahasiswa");
   const { status } = await searchParams;
 
-  const [ringkasan, dipinjam, aktivitas, riwayat, notifikasi, jumlahBaru] = await Promise.all([
+  // Rapikan antrean reservasi (kedaluwarsa / giliran berikutnya) sebelum menampilkan data.
+  await sapuSemuaAntrean();
+
+  const [ringkasan, dipinjam, aktivitas, riwayat, notifikasi, jumlahBaru, reservasi] = await Promise.all([
     pool.query(
       `SELECT
          COUNT(*) FILTER (WHERE status_pinjam = 'Sedang Dipinjam')::int      AS dipinjam,
@@ -78,6 +84,17 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
     ),
     pool.query(
       "SELECT COUNT(*)::int AS jumlah FROM notifications WHERE user_id = $1 AND sudah_dibaca = FALSE",
+      [user.id]
+    ),
+    pool.query(
+      `SELECT r.id, r.book_id, r.status, b.judul, b.pengarang,
+              r.batas_ambil::text AS batas_ambil,
+              (SELECT COUNT(*)::int FROM reservations x
+                WHERE x.book_id = r.book_id AND x.status = 'Menunggu'
+                  AND (x.created_at, x.id) <= (r.created_at, r.id)) AS urutan
+         FROM reservations r JOIN books b ON b.id = r.book_id
+        WHERE r.user_id = $1 AND r.status IN ('Menunggu', 'Siap Diambil')
+        ORDER BY (r.status = 'Siap Diambil') DESC, r.created_at, r.id`,
       [user.id]
     ),
   ]);
@@ -157,6 +174,41 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
             )}
           </div>
         </section>
+
+        {reservasi.rows.length > 0 ? (
+          <section id="reservasi" className="scroll-mt-20 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">Reservasi Saya</h2>
+            <p className="mt-1 text-sm text-slate-500">Buku yang kamu antre karena stoknya habis.</p>
+            <div className="mt-5 space-y-3">
+              {reservasi.rows.map((rv) => (
+                <div key={rv.id} className="flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-900">{rv.judul}</p>
+                    <p className="text-sm text-slate-500">{rv.pengarang}</p>
+                    {rv.status === "Siap Diambil" ? (
+                      <p className="mt-1 text-xs font-semibold text-emerald-700">
+                        Giliranmu! Ajukan peminjaman sebelum {formatTanggal(rv.batas_ambil)}.
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-slate-500">Antrean ke-{rv.urutan}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge tone={rv.status === "Siap Diambil" ? "success" : "warning"}>
+                      {rv.status === "Siap Diambil" ? "Siap diambil" : "Menunggu"}
+                    </StatusBadge>
+                    {rv.status === "Siap Diambil" ? (
+                      <Link href={`/buku/${rv.book_id}`} className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold !text-white transition hover:bg-slate-800">
+                        Ajukan pinjam
+                      </Link>
+                    ) : null}
+                    <AksiForm action={batalkanReservasi} id={rv.id} label="Batalkan" variant="neutral" confirmText={`Batalkan reservasi "${rv.judul}"?`} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section id="pinjaman" className="grid scroll-mt-20 grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-5">

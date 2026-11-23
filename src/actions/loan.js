@@ -7,6 +7,7 @@ import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validateUlasan, validateAlasanTolak } from "@/lib/validation";
 import { buatNotifikasi } from "@/lib/notifikasi";
+import { sapuBuku, sapuBukuMandiri, SQL_DICADANGKAN, HARI_AMBIL } from "@/lib/reservasi";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 
 // Semua action mengembalikan { ok, message } (kecuali yang redirect).
@@ -57,12 +58,24 @@ export async function ajukanPinjam(prevState, formData) {
   const bookId = idDariForm(formData);
   if (!bookId) return gagal("ID buku tidak valid.");
 
+  // Bereskan reservasi kedaluwarsa dulu supaya stok bebas akurat.
+  await sapuBukuMandiri(bookId);
+
   const { rows } = await pool.query(
-    "SELECT stok_tersedia FROM books WHERE id = $1",
-    [bookId]
+    `SELECT b.stok_tersedia, ${SQL_DICADANGKAN} AS dicadangkan,
+            EXISTS (SELECT 1 FROM reservations rv
+                     WHERE rv.book_id = b.id AND rv.user_id = $2
+                       AND rv.status = 'Siap Diambil' AND rv.batas_ambil >= CURRENT_DATE) AS punya_jatah
+       FROM books b WHERE b.id = $1`,
+    [bookId, user.id]
   );
   if (rows.length === 0) return gagal("Buku tidak ditemukan.");
-  if (rows[0].stok_tersedia <= 0) return gagal("Stok buku sedang habis.");
+  const buku = rows[0];
+  if (buku.stok_tersedia <= 0) return gagal("Stok buku sedang habis. Kamu bisa ikut reservasi.");
+  // Eksemplar yang dicadangkan hanya boleh diambil pemilik reservasinya.
+  if (!buku.punya_jatah && buku.stok_tersedia - buku.dicadangkan <= 0) {
+    return gagal("Stok sedang dicadangkan untuk mahasiswa yang antre. Kamu bisa ikut reservasi.");
+  }
 
   // Aturan blokir: masih ada denda Tertunggak -> tidak boleh pinjam baru
   if ((await totalDendaTertunggak(pool, user.id)) > 0) {
@@ -80,6 +93,15 @@ export async function ajukanPinjam(prevState, formData) {
       return gagal("Kamu sudah punya pengajuan atau peminjaman aktif untuk buku ini.");
     }
     throw err;
+  }
+
+  // Pemegang jatah reservasi: perpanjang batasnya agar pegawai punya waktu memproses.
+  if (buku.punya_jatah) {
+    await pool.query(
+      `UPDATE reservations SET batas_ambil = CURRENT_DATE + $3::int
+        WHERE user_id = $1 AND book_id = $2 AND status = 'Siap Diambil'`,
+      [user.id, bookId, HARI_AMBIL]
+    );
   }
 
   segarkan();
@@ -176,6 +198,22 @@ export async function setujuiPinjam(prevState, formData) {
       return gagal("Transaksi ini sudah diproses.");
     if (row.stok_tersedia <= 0) return gagal("Stok buku habis, tidak bisa disetujui.");
 
+    // Rapikan antrean (reservasi kedaluwarsa, giliran berikutnya), lalu cek jatah.
+    await sapuBuku(db, row.book_id);
+    const { rows: jatah } = await db.query(
+      `SELECT id, user_id FROM reservations
+        WHERE book_id = $1 AND status = 'Siap Diambil' AND batas_ambil >= CURRENT_DATE
+          FOR UPDATE`,
+      [row.book_id]
+    );
+    const jatahPeminjam = jatah.find((j) => j.user_id === row.user_id);
+    const dicadangkanLain = jatah.length - (jatahPeminjam ? 1 : 0);
+    if (row.stok_tersedia - dicadangkanLain <= 0) {
+      return gagal(
+        "Tidak bisa disetujui: eksemplar yang tersisa dicadangkan untuk mahasiswa lain di antrean reservasi."
+      );
+    }
+
     // Aturan blokir juga berlaku saat persetujuan: denda bisa saja baru muncul
     // setelah mahasiswa mengajukan (mis. buku lain yang telat baru dikembalikan).
     if ((await totalDendaTertunggak(db, row.user_id)) > 0) {
@@ -198,6 +236,12 @@ export async function setujuiPinjam(prevState, formData) {
     RETURNING tanggal_jatuh_tempo::text AS jatuh_tempo`,
       [id, row.durasi_maks_pinjam, staf.id]
     );
+    if (jatahPeminjam) {
+      await db.query(
+        "UPDATE reservations SET status = 'Terpenuhi', loan_id = $2 WHERE id = $1",
+        [jatahPeminjam.id, id]
+      );
+    }
     await buatNotifikasi(db, {
       userId: row.user_id,
       loanId: id,
@@ -296,6 +340,9 @@ export async function konfirmasiKembali(prevState, formData) {
           ? `Pengembalian "${row.judul}" sudah dicatat, tetapi terlambat ${row.hari_telat} hari.`
           : `Pengembalian "${row.judul}" sudah dicatat tepat waktu. Terima kasih!`,
     });
+    // Eksemplar kembali: kalau ada antrean reservasi, yang paling awal langsung dapat jatah.
+    await sapuBuku(db, row.book_id);
+
     if (denda > 0) {
       await buatNotifikasi(db, {
         userId: row.user_id,

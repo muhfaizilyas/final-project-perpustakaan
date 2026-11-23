@@ -5,6 +5,7 @@ import pool from "@/lib/db";
 import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validateBuku } from "@/lib/validation";
+import { sapuBukuMandiri } from "@/lib/reservasi";
 
 const LIST_URL = "/dashboard/buku";
 const FIELDS = [
@@ -120,6 +121,9 @@ export async function updateBuku(id, prevState, formData) {
     }
     throw err;
   }
+
+  // Stok bisa bertambah: kalau ada antrean reservasi, naikkan yang paling awal.
+  await sapuBukuMandiri(id);
 
   redirect(`${LIST_URL}?status=diubah`);
 }

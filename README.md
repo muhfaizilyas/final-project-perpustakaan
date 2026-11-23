@@ -43,6 +43,7 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - [x] Sesi lama otomatis keluar setelah password diubah / direset
 - [x] Ekspor transaksi + rekap denda ke CSV (khusus admin)
 - [x] Notifikasi mahasiswa: pinjam disetujui / ditolak, buku dikembalikan, denda muncul
+- [x] Reservasi buku: antrean untuk buku yang stoknya habis, jatah otomatis saat buku kembali
 
 ## Aturan Bisnis yang Diterapkan
 
@@ -60,6 +61,17 @@ Aplikasi web manajemen perpustakaan kampus untuk mengelola buku, kategori, pengu
 - **Cabut sesi lama**: kolom `users.password_diubah_pada` diisi saat password diubah / direset. Token sesi yang dibuat sebelum waktu itu ditolak, jadi perangkat lain otomatis keluar. Perangkat yang dipakai untuk mengubah tetap masuk.
 - **Ekspor CSV**: `GET /api/transaksi/export` (hanya admin; 401 jika belum login, 403 jika bukan admin). Berisi seluruh transaksi dan rekap denda di bawahnya. File memakai penanda UTF-8 (BOM), dan sel teks yang diawali `=`, `+`, `-`, `@` diberi awalan `'` agar tidak dijalankan sebagai rumus. Jika Excel (setelan regional Indonesia) membuka CSV dalam satu kolom, pakai `?pemisah=titik-koma` (tombol "CSV untuk Excel" di dashboard admin).
 - **Notifikasi**: tabel `notifications` terisi otomatis dari `src/actions/loan.js` (dalam transaksi SQL yang sama dengan perubahan statusnya) dan tampil di dashboard mahasiswa. Belum ada pengingat H-1.
+
+## Reservasi Buku
+
+- Buku yang stoknya habis menampilkan tombol **Reservasi Buku** di halaman detail (hanya mahasiswa tanpa denda tertunggak). Satu mahasiswa hanya boleh punya satu reservasi aktif per buku.
+- Status: `Menunggu` (antre, urut waktu daftar) → `Siap Diambil` → `Terpenuhi`; atau `Dibatalkan` / `Kedaluwarsa`.
+- Saat buku dikembalikan (atau reservasi lain batal / kedaluwarsa, atau stok ditambah), antrean paling awal naik menjadi `Siap Diambil` dan mendapat notifikasi. Satu eksemplar **dicadangkan** untuknya selama 2 hari (`HARI_AMBIL` di `src/lib/reservasi.js`): mahasiswa lain tidak bisa mengajukan atau disetujui pinjamannya untuk eksemplar itu.
+- Pemegang jatah mengajukan pinjam seperti biasa. Saat pengajuan dibuat, batas jatahnya diperpanjang 2 hari supaya pegawai punya waktu memproses. Reservasi menjadi `Terpenuhi` ketika pegawai menyetujui pinjamannya.
+- Lewat batas tanpa diproses: `Kedaluwarsa`, mahasiswa diberi notifikasi, dan antrean berikutnya naik.
+- Eksemplar yang dicadangkan tidak mengurangi `books.stok_tersedia`. Stok yang tampil di katalog dan halaman detail adalah stok bebas (`stok_tersedia` dikurangi yang dicadangkan).
+- Tidak ada cron. Kedaluwarsa dan kenaikan antrean diproses saat ada kejadian terkait: pengembalian, pembatalan, membuka halaman buku / dashboard mahasiswa / daftar reservasi staf, serta saat mengajukan atau menyetujui pinjam.
+- Admin dan pegawai melihat antrean di menu **Reservasi** (`/dashboard/transaksi/reservasi`, hanya lihat).
 
 ## Cara Menjalankan
 
@@ -96,9 +108,12 @@ npm install
    ```bash
    psql -U postgres -d perpustakaan -f database/migrasi-password-diubah-pada.sql
    psql -U postgres -d perpustakaan -f database/migrasi-notifikasi.sql
+   psql -U postgres -d perpustakaan -f database/migrasi-reservasi.sql
    ```
 
-   Aplikasi versi ini **wajib** memakai kedua migrasi tersebut, kalau tidak login dan proses peminjaman akan error.
+   Jalankan sesuai urutan itu. `migrasi-reservasi.sql` membuat tabel `reservations` dan menambah dua tipe notifikasi baru.
+
+   Aplikasi versi ini **wajib** memakai ketiga migrasi tersebut, kalau tidak login dan proses peminjaman akan error.
 
 ### 4. Konfigurasi environment
 
@@ -140,13 +155,13 @@ Akun `andi@student.kampus.ac.id` (password `mahasiswa123`) sengaja memiliki dend
 ```
 database/          schema.sql, seed.sql, dan file migrasi (di luar folder app)
 src/
-  actions/         Server Actions (auth, kategori, buku, loan, notifikasi, pengumuman, user)
+  actions/         Server Actions (auth, kategori, buku, loan, notifikasi, pengumuman, reservasi, user)
   app/             halaman dan route (App Router)
     login/ register/
     katalog/ buku/[id]/ pengumuman/ pengumuman/[id]/   halaman publik
     dashboard/     admin/ pegawai/ mahasiswa/ buku/ transaksi/ pengumuman/
   components/      komponen UI (form, tombol, ...)
-  lib/             db.js (pool PostgreSQL), session.js, auth.js, validation.js, csv.js, notifikasi.js
+  lib/             db.js (pool PostgreSQL), session.js, auth.js, validation.js, csv.js, notifikasi.js, reservasi.js
 ```
 
 ## Catatan Keamanan

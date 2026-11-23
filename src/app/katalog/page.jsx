@@ -9,6 +9,7 @@ import { parseId } from "@/lib/id";
 import BookCover from "@/components/BookCover";
 import BookDetailPanel from "@/components/BookDetailPanel";
 import DetailScroll from "@/components/DetailScroll";
+import { SQL_STOK_BEBAS } from "@/lib/reservasi";
 
 export const metadata = { title: "Katalog Buku" };
 
@@ -22,7 +23,7 @@ const URUTAN = {
 const LABEL_URUTAN = { judul: "A–Z", tahun: "Terbaru", rating: "Rating" };
 
 const KOLOM = `b.id, b.judul, b.isbn, b.pengarang, b.penerbit, b.tahun_terbit,
-               b.stok_tersedia, b.durasi_maks_pinjam, b.denda_per_hari, b.cover_url,
+               ${SQL_STOK_BEBAS} AS stok_tersedia, b.durasi_maks_pinjam, b.denda_per_hari, b.cover_url,
                c.nama AS kategori, ROUND(AVG(r.rating), 1)::text AS rating`;
 const DARI = `FROM books b
               JOIN categories c ON c.id = b.category_id

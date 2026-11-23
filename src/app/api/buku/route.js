@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { parseId } from "@/lib/id";
+import { SQL_STOK_BEBAS } from "@/lib/reservasi";
 
 // GET /api/buku?q=clean&kategori=1
 // Data katalog bersifat publik (sama dengan halaman /katalog), jadi tanpa login.
@@ -13,7 +14,7 @@ export async function GET(request) {
   try {
     const { rows } = await pool.query(
       `SELECT b.id, b.judul, b.isbn, b.pengarang, b.penerbit, b.tahun_terbit,
-              b.stok_tersedia, c.nama AS kategori,
+              ${SQL_STOK_BEBAS} AS stok_tersedia, c.nama AS kategori,
               ROUND(AVG(r.rating), 1)::float AS rating
          FROM books b
          JOIN categories c ON c.id = b.category_id
