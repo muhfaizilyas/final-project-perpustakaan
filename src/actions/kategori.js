@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validateKategori } from "@/lib/validation";
 
@@ -72,8 +73,8 @@ export async function updateKategori(id, prevState, formData) {
 export async function deleteKategori(prevState, formData) {
   await requireRole("admin");
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { message: "ID tidak valid." };
+  const id = parseId(formData.get("id"));
+  if (!id) return { message: "ID tidak valid." };
 
   // Aturan: kategori yang masih punya buku tidak boleh dihapus
   const { rows } = await pool.query(

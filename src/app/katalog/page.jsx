@@ -5,6 +5,7 @@ import AppFrame from "@/components/AppFrame";
 import Ikon from "@/components/Ikon";
 import { KatalogPanel } from "@/components/SectionPanels";
 import { buatHref } from "@/lib/katalog";
+import { parseId } from "@/lib/id";
 import BookCover from "@/components/BookCover";
 import BookDetailPanel from "@/components/BookDetailPanel";
 import DetailScroll from "@/components/DetailScroll";
@@ -33,9 +34,9 @@ export default async function KatalogPage({ searchParams }) {
   const { q = "", kategori = "", sort = "judul", pilih = "" } = await searchParams;
 
   const keyword = String(q).trim();
-  const kategoriId = /^\d+$/.test(kategori) ? Number(kategori) : null;
-  const urutan = URUTAN[sort] ? sort : "judul";
-  const pilihId = /^\d+$/.test(pilih) ? Number(pilih) : null;
+  const kategoriId = parseId(kategori);
+  const urutan = Object.hasOwn(URUTAN, sort) ? sort : "judul";
+  const pilihId = parseId(pilih);
 
   const [{ rows: buku }, { rows: rekomendasi }, { rows: terpilih }] =
     await Promise.all([

@@ -87,7 +87,7 @@ export default async function MahasiswaDashboardPage({ searchParams }) {
       }
     >
       <div className="space-y-8">
-        {PESAN[status] ? (
+        {Object.hasOwn(PESAN, status) ? (
           <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             {PESAN[status]}
           </p>

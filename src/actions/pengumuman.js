@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validatePengumuman } from "@/lib/validation";
 
@@ -66,8 +67,8 @@ export async function updatePengumuman(id, prevState, formData) {
 export async function deletePengumuman(prevState, formData) {
   await requireRole("admin", "pegawai");
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id) || id <= 0) return { message: "ID tidak valid." };
+  const id = parseId(formData.get("id"));
+  if (!id) return { message: "ID tidak valid." };
 
   const result = await pool.query("DELETE FROM announcements WHERE id = $1", [id]);
   if (result.rowCount === 0) return { message: "Pengumuman tidak ditemukan." };

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal, formatRupiah } from "@/lib/format";
 import PageShell from "@/components/PageShell";
@@ -12,15 +13,16 @@ import { ajukanPinjam } from "@/actions/loan";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  if (!/^\d+$/.test(id)) return { title: "Buku tidak ditemukan" };
-  const { rows } = await pool.query("SELECT judul FROM books WHERE id = $1", [Number(id)]);
+  const bukuId = parseId(id);
+  if (!bukuId) return { title: "Buku tidak ditemukan" };
+  const { rows } = await pool.query("SELECT judul FROM books WHERE id = $1", [bukuId]);
   return { title: rows[0]?.judul ?? "Buku tidak ditemukan" };
 }
 
 export default async function DetailBukuPage({ params }) {
   const { id } = await params;
-  if (!/^\d+$/.test(id)) notFound();
-  const bukuId = Number(id);
+  const bukuId = parseId(id);
+  if (!bukuId) notFound();
 
   const user = await getCurrentUser();
 

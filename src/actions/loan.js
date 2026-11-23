@@ -3,8 +3,9 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
-import { validateUlasan } from "@/lib/validation";
+import { validateUlasan, validateAlasanTolak } from "@/lib/validation";
 
 // Semua action mengembalikan { ok, message } (kecuali yang redirect).
 
@@ -12,8 +13,7 @@ const gagal = (message) => ({ ok: false, message });
 const berhasil = (message) => ({ ok: true, message });
 
 function idDariForm(formData, nama = "id") {
-  const id = Number(formData.get(nama));
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return parseId(formData.get(nama));
 }
 
 function segarkan() {
@@ -36,6 +36,17 @@ async function dalamTransaksi(fn) {
   }
 }
 
+// Total denda berstatus Tertunggak milik seorang mahasiswa.
+// `db` boleh pool (query biasa) atau client transaksi.
+async function totalDendaTertunggak(db, userId) {
+  const { rows } = await db.query(
+    `SELECT COALESCE(SUM(denda_nominal), 0) AS total FROM loans
+      WHERE user_id = $1 AND status_denda = 'Tertunggak'`,
+    [userId]
+  );
+  return Number(rows[0].total);
+}
+
 /* ===================== MAHASISWA ===================== */
 
 // Mahasiswa mengajukan peminjaman -> status "Menunggu Konfirmasi"
@@ -52,12 +63,7 @@ export async function ajukanPinjam(prevState, formData) {
   if (rows[0].stok_tersedia <= 0) return gagal("Stok buku sedang habis.");
 
   // Aturan blokir: masih ada denda Tertunggak -> tidak boleh pinjam baru
-  const denda = await pool.query(
-    `SELECT COALESCE(SUM(denda_nominal), 0) AS total FROM loans
-      WHERE user_id = $1 AND status_denda = 'Tertunggak'`,
-    [user.id]
-  );
-  if (Number(denda.rows[0].total) > 0) {
+  if ((await totalDendaTertunggak(pool, user.id)) > 0) {
     return gagal("Kamu masih punya denda tertunggak. Lunasi dulu sebelum meminjam lagi.");
   }
 
@@ -156,7 +162,7 @@ export async function setujuiPinjam(prevState, formData) {
 
   const hasil = await dalamTransaksi(async (db) => {
     const { rows } = await db.query(
-      `SELECT l.status_pinjam, b.id AS book_id, b.stok_tersedia, b.durasi_maks_pinjam
+      `SELECT l.status_pinjam, l.user_id, b.id AS book_id, b.stok_tersedia, b.durasi_maks_pinjam
          FROM loans l JOIN books b ON b.id = l.book_id
         WHERE l.id = $1
           FOR UPDATE OF l, b`,
@@ -167,6 +173,14 @@ export async function setujuiPinjam(prevState, formData) {
     if (row.status_pinjam !== "Menunggu Konfirmasi")
       return gagal("Transaksi ini sudah diproses.");
     if (row.stok_tersedia <= 0) return gagal("Stok buku habis, tidak bisa disetujui.");
+
+    // Aturan blokir juga berlaku saat persetujuan: denda bisa saja baru muncul
+    // setelah mahasiswa mengajukan (mis. buku lain yang telat baru dikembalikan).
+    if ((await totalDendaTertunggak(db, row.user_id)) > 0) {
+      return gagal(
+        "Tidak bisa disetujui: mahasiswa ini masih punya denda tertunggak. Tolak pengajuan atau minta denda dilunasi dulu."
+      );
+    }
 
     await db.query(
       "UPDATE books SET stok_tersedia = stok_tersedia - 1 WHERE id = $1",
@@ -194,7 +208,8 @@ export async function tolakPinjam(prevState, formData) {
   const id = idDariForm(formData);
   const alasan = String(formData.get("alasan") ?? "").trim();
   if (!id) return gagal("ID transaksi tidak valid.");
-  if (!alasan) return gagal("Alasan penolakan wajib diisi.");
+  const pesanAlasan = validateAlasanTolak(alasan);
+  if (pesanAlasan) return gagal(pesanAlasan);
 
   const result = await pool.query(
     `UPDATE loans

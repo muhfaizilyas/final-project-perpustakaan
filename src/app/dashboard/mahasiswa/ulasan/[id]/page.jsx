@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
 import DashboardShell from "@/components/DashboardShell";
@@ -11,7 +12,8 @@ export const metadata = { title: "Tulis Ulasan" };
 export default async function UlasanPage({ params }) {
   const user = await requireRole("mahasiswa");
   const { id } = await params;
-  if (!/^\d+$/.test(id)) notFound();
+  const loanId = parseId(id);
+  if (!loanId) notFound();
 
   const { rows } = await pool.query(
     `SELECT l.id, l.status_pinjam, l.tanggal_kembali::text AS kembali,
@@ -19,7 +21,7 @@ export default async function UlasanPage({ params }) {
             EXISTS (SELECT 1 FROM reviews r WHERE r.loan_id = l.id) AS sudah
        FROM loans l JOIN books b ON b.id = l.book_id
       WHERE l.id = $1 AND l.user_id = $2`,
-    [Number(id), user.id]
+    [loanId, user.id]
   );
   const loan = rows[0];
   if (!loan) notFound();

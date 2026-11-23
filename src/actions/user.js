@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validateUserBaru, validateUserEdit } from "@/lib/validation";
 
@@ -136,8 +137,8 @@ export async function updateUser(id, prevState, formData) {
 export async function deleteUser(prevState, formData) {
   const admin = await requireRole("admin");
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id) || id <= 0) return { message: "ID tidak valid." };
+  const id = parseId(formData.get("id"));
+  if (!id) return { message: "ID tidak valid." };
 
   if (id === admin.id) return { message: "Kamu tidak bisa menghapus akunmu sendiri." };
 

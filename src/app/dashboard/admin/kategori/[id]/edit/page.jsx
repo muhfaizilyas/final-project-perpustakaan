@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { updateKategori } from "@/actions/kategori";
 import KategoriForm from "@/components/KategoriForm";
@@ -11,8 +12,8 @@ export default async function EditKategoriPage({ params }) {
   const user = await requireRole("admin");
 
   const { id } = await params;
-  const kategoriId = Number(id);
-  if (!Number.isInteger(kategoriId)) notFound();
+  const kategoriId = parseId(id);
+  if (!kategoriId) notFound();
 
   const { rows } = await pool.query(
     "SELECT id, nama, kode, deskripsi FROM categories WHERE id = $1",

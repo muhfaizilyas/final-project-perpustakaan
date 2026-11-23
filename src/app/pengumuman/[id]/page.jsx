@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { getCurrentUser } from "@/lib/auth";
 import { formatTanggal } from "@/lib/format";
 import AppFrame from "@/components/AppFrame";
@@ -21,16 +22,18 @@ async function ambilPengumuman(id) {
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  if (!/^\d+$/.test(id)) return { title: "Pengumuman tidak ditemukan" };
-  const p = await ambilPengumuman(Number(id));
+  const pengumumanId = parseId(id);
+  if (!pengumumanId) return { title: "Pengumuman tidak ditemukan" };
+  const p = await ambilPengumuman(pengumumanId);
   return { title: p?.status === "Published" ? p.judul : "Pengumuman" };
 }
 
 export default async function DetailPengumumanPage({ params }) {
   const { id } = await params;
-  if (!/^\d+$/.test(id)) notFound();
+  const pengumumanId = parseId(id);
+  if (!pengumumanId) notFound();
 
-  const [user, p] = await Promise.all([getCurrentUser(), ambilPengumuman(Number(id))]);
+  const [user, p] = await Promise.all([getCurrentUser(), ambilPengumuman(pengumumanId)]);
   if (!p) notFound();
 
   // Draft hanya boleh dilihat admin/pegawai (pratinjau). Selain itu dianggap tidak ada.

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { updateBuku } from "@/actions/buku";
 import BukuForm from "@/components/BukuForm";
@@ -11,8 +12,8 @@ export default async function EditBukuPage({ params }) {
   const user = await requireRole("admin", "pegawai");
 
   const { id } = await params;
-  const bukuId = Number(id);
-  if (!Number.isInteger(bukuId)) notFound();
+  const bukuId = parseId(id);
+  if (!bukuId) notFound();
 
   const [{ rows }, { rows: categories }] = await Promise.all([
     pool.query(

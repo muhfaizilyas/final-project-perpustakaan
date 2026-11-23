@@ -1,5 +1,6 @@
 import Link from "next/link";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import DashboardShell from "@/components/DashboardShell";
 import HapusBukuButton from "@/components/HapusBukuButton";
@@ -18,7 +19,7 @@ export default async function BukuPage({ searchParams }) {
   const user = await requireRole("admin", "pegawai");
   const { status, q = "", kategori = "" } = await searchParams;
 
-  const kategoriId = /^\d+$/.test(kategori) ? Number(kategori) : null;
+  const kategoriId = parseId(kategori);
   const keyword = String(q).trim();
 
   const [{ rows: buku }, { rows: daftarKategori }] = await Promise.all([
@@ -50,7 +51,7 @@ export default async function BukuPage({ searchParams }) {
       }
     >
       <div className="space-y-6">
-        {PESAN[status] ? (
+        {Object.hasOwn(PESAN, status) ? (
           <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             {PESAN[status]}
           </p>

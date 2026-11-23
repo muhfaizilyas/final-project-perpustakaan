@@ -40,6 +40,7 @@ export default function AksiForm({
           <input
             name="alasan"
             required
+            maxLength={500}
             placeholder={alasanPlaceholder}
             aria-label={alasanPlaceholder}
             className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"

@@ -108,7 +108,7 @@ function Info({ l }) {
 export default async function TransaksiPage({ searchParams }) {
   const user = await requireRole("admin", "pegawai");
   const { tab: tabParam = "antrean", q = "" } = await searchParams;
-  const tab = TAB[tabParam] ? tabParam : "antrean";
+  const tab = Object.hasOwn(TAB, tabParam) ? tabParam : "antrean";
   const keyword = String(q).trim();
   // Soal: pegawai yang memproses transaksi; admin hanya memantau.
   const bolehAksi = user.role === "pegawai";

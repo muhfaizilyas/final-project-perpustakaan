@@ -117,8 +117,9 @@ CREATE INDEX idx_announcements_publik ON announcements(status, tanggal_rilis DES
 --      mengajukan peminjaman baru.
 --
 --  Menghapus user atau buku ikut menghapus transaksinya (CASCADE).
---  Aturan "tidak boleh dihapus jika ada transaksi aktif" dicek di
---  backend sebelum DELETE dijalankan.
+--  Karena itu backend memeriksa dulu sebelum DELETE dijalankan:
+--    - buku : ditolak jika ada transaksi aktif ATAU denda Tertunggak
+--    - user : ditolak jika ada transaksi aktif ATAU denda Tertunggak
 -- ---------------------------------------------------------------------
 CREATE TABLE loans (
     id                    SERIAL PRIMARY KEY,
@@ -138,7 +139,7 @@ CREATE TABLE loans (
     tanggal_pinjam        DATE,
     tanggal_jatuh_tempo   DATE,
     tanggal_kembali       DATE,
-    alasan_penolakan      TEXT,
+    alasan_penolakan      VARCHAR(500),   -- batas sama dengan validasi di backend
 
     denda_nominal         NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (denda_nominal >= 0),
     status_denda          VARCHAR(20) NOT NULL DEFAULT 'Tidak Ada'
@@ -173,6 +174,6 @@ CREATE TABLE reviews (
     id          SERIAL PRIMARY KEY,
     loan_id     INTEGER NOT NULL UNIQUE REFERENCES loans(id) ON DELETE CASCADE,
     rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    komentar    TEXT,
+    komentar    VARCHAR(1000),   -- batas sama dengan validasi di backend
     created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );

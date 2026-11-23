@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { validateBuku } from "@/lib/validation";
 
@@ -30,6 +31,7 @@ async function isbnSudahAda(isbn, kecualiId = null) {
 }
 
 async function kategoriAda(categoryId) {
+  if (!categoryId) return false; // ID di luar batas INTEGER dianggap tidak ada
   const { rows } = await pool.query("SELECT 1 FROM categories WHERE id = $1", [categoryId]);
   return rows.length > 0;
 }
@@ -40,7 +42,7 @@ export async function createBuku(prevState, formData) {
   const values = bacaForm(formData);
   const errors = validateBuku(values);
   if (!errors.isbn && (await isbnSudahAda(values.isbn))) errors.isbn = "ISBN sudah terdaftar.";
-  if (!errors.category_id && !(await kategoriAda(Number(values.category_id))))
+  if (!errors.category_id && !(await kategoriAda(parseId(values.category_id))))
     errors.category_id = "Kategori tidak ditemukan.";
   if (Object.keys(errors).length > 0) return { errors, message: "", values };
 
@@ -75,7 +77,7 @@ export async function updateBuku(id, prevState, formData) {
   const values = bacaForm(formData);
   const errors = validateBuku(values);
   if (!errors.isbn && (await isbnSudahAda(values.isbn, id))) errors.isbn = "ISBN sudah terdaftar.";
-  if (!errors.category_id && !(await kategoriAda(Number(values.category_id))))
+  if (!errors.category_id && !(await kategoriAda(parseId(values.category_id))))
     errors.category_id = "Kategori tidak ditemukan.";
 
   // Stok total tidak boleh lebih kecil dari jumlah eksemplar yang sedang dipinjam.
@@ -125,14 +127,17 @@ export async function updateBuku(id, prevState, formData) {
 export async function deleteBuku(prevState, formData) {
   await requireRole("admin", "pegawai");
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { message: "ID tidak valid." };
+  const id = parseId(formData.get("id"));
+  if (!id) return { message: "ID tidak valid." };
 
-  // Aturan: buku yang sedang dipinjam (atau masih punya pengajuan aktif) tidak boleh dihapus
+  // Aturan soal: buku yang sedang dipinjam tidak boleh dihapus.
+  // Tabel loans memakai ON DELETE CASCADE, jadi denda yang belum lunas juga
+  // harus dicek. Kalau tidak, menghapus buku ikut menghapus denda mahasiswa.
   const { rows } = await pool.query(
-    `SELECT COUNT(*)::int AS aktif FROM loans
-      WHERE book_id = $1
-        AND status_pinjam IN ('Sedang Dipinjam', 'Menunggu Konfirmasi')`,
+    `SELECT
+       COUNT(*) FILTER (WHERE status_pinjam IN ('Sedang Dipinjam', 'Menunggu Konfirmasi'))::int AS aktif,
+       COUNT(*) FILTER (WHERE status_denda = 'Tertunggak')::int AS denda
+       FROM loans WHERE book_id = $1`,
     [id]
   );
   if (rows[0].aktif > 0) {
@@ -140,7 +145,27 @@ export async function deleteBuku(prevState, formData) {
       message: `Tidak bisa dihapus: ada ${rows[0].aktif} peminjaman aktif untuk buku ini.`,
     };
   }
+  if (rows[0].denda > 0) {
+    return {
+      message: `Tidak bisa dihapus: ada ${rows[0].denda} denda yang belum lunas untuk buku ini.`,
+    };
+  }
 
-  await pool.query("DELETE FROM books WHERE id = $1", [id]);
+  // DELETE mengulang syarat yang sama dalam satu perintah, supaya tetap aman
+  // kalau ada pengajuan baru masuk di antara pengecekan di atas dan penghapusan.
+  const hasil = await pool.query(
+    `DELETE FROM books b
+      WHERE b.id = $1
+        AND NOT EXISTS (
+          SELECT 1 FROM loans l
+           WHERE l.book_id = b.id
+             AND (l.status_pinjam IN ('Sedang Dipinjam', 'Menunggu Konfirmasi')
+                  OR l.status_denda = 'Tertunggak'))`,
+    [id]
+  );
+  if (hasil.rowCount === 0) {
+    return { message: "Buku tidak ditemukan atau baru saja dipinjam. Muat ulang halaman." };
+  }
+
   redirect(`${LIST_URL}?status=dihapus`);
 }

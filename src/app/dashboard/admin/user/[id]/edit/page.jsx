@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { updateUser } from "@/actions/user";
 import UserForm from "@/components/UserForm";
@@ -11,8 +12,8 @@ export default async function EditUserPage({ params }) {
   const admin = await requireRole("admin");
 
   const { id } = await params;
-  if (!/^\d+$/.test(id)) notFound();
-  const userId = Number(id);
+  const userId = parseId(id);
+  if (!userId) notFound();
 
   const { rows } = await pool.query(
     `SELECT id, nama_lengkap, email, nomor_identitas, role, is_active

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import pool from "@/lib/db";
+import { parseId } from "@/lib/id";
 import { requireRole } from "@/lib/auth";
 import { updatePengumuman } from "@/actions/pengumuman";
 import PengumumanForm from "@/components/PengumumanForm";
@@ -11,8 +12,8 @@ export default async function EditPengumumanPage({ params }) {
   const user = await requireRole("admin", "pegawai");
 
   const { id } = await params;
-  if (!/^\d+$/.test(id)) notFound();
-  const pengumumanId = Number(id);
+  const pengumumanId = parseId(id);
+  if (!pengumumanId) notFound();
 
   const { rows } = await pool.query(
     `SELECT id, judul, konten, kategori, status, tanggal_rilis::text AS tanggal_rilis

@@ -1,5 +1,17 @@
+import { parseId } from "@/lib/id";
+
 // Ubah sesuai domain kampus di spesifikasi tugas kalau berbeda.
 export const DOMAIN_EMAIL_MAHASISWA = "@student.kampus.ac.id";
+
+// Batas panjang input. Harus sama dengan tipe kolom di database/schema.sql,
+// kalau tidak PostgreSQL menolak dengan error "value too long" (halaman crash).
+export const BATAS = {
+  nama: 100,
+  email: 100,
+  password: 72, // bcrypt hanya membaca 72 byte pertama
+  komentar: 1000,
+  alasan: 500,
+};
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,8 +35,12 @@ export function validateRegister({
   if (!nama_lengkap) errors.nama_lengkap = "Nama lengkap wajib diisi.";
   else if (nama_lengkap.length < 3)
     errors.nama_lengkap = "Nama minimal 3 karakter.";
+  else if (nama_lengkap.length > BATAS.nama)
+    errors.nama_lengkap = `Nama maksimal ${BATAS.nama} karakter.`;
 
   if (!email) errors.email = "Email wajib diisi.";
+  else if (email.length > BATAS.email)
+    errors.email = `Email maksimal ${BATAS.email} karakter.`;
   else if (!EMAIL_REGEX.test(email)) errors.email = "Format email tidak valid.";
   else if (!email.endsWith(DOMAIN_EMAIL_MAHASISWA))
     errors.email = `Gunakan email kampus (${DOMAIN_EMAIL_MAHASISWA}).`;
@@ -36,6 +52,8 @@ export function validateRegister({
   if (!password) errors.password = "Password wajib diisi.";
   else if (password.length < 8)
     errors.password = "Password minimal 8 karakter.";
+  else if (password.length > BATAS.password)
+    errors.password = `Password maksimal ${BATAS.password} karakter.`;
 
   if (!konfirmasi) errors.konfirmasi = "Konfirmasi password wajib diisi.";
   else if (password !== konfirmasi)
@@ -86,7 +104,7 @@ export function validateBuku(v) {
   else if (Number(v.tahun_terbit) < 1000 || Number(v.tahun_terbit) > tahunMaks)
     errors.tahun_terbit = `Tahun terbit harus antara 1000 dan ${tahunMaks}.`;
 
-  if (!/^\d+$/.test(v.category_id)) errors.category_id = "Pilih kategori.";
+  if (!parseId(v.category_id)) errors.category_id = "Pilih kategori.";
 
   if (!/^-?\d+$/.test(v.stok_total)) errors.stok_total = "Stok total harus berupa angka.";
   else if (Number(v.stok_total) < 0) errors.stok_total = "Stok total tidak boleh negatif.";
@@ -99,7 +117,7 @@ export function validateBuku(v) {
 
   if (!/^-?\d+$/.test(v.denda_per_hari)) errors.denda_per_hari = "Denda harus berupa angka.";
   else if (Number(v.denda_per_hari) < 0) errors.denda_per_hari = "Denda tidak boleh negatif.";
-  else if (Number(v.denda_per_hari) > 100000000) errors.denda_per_hari = "Denda terlalu besar.";
+  else if (Number(v.denda_per_hari) > 99999999) errors.denda_per_hari = "Denda terlalu besar.";
 
   if (v.cover_url) {
     if (!/^https?:\/\/\S+$/i.test(v.cover_url))
@@ -116,7 +134,18 @@ export function validateUlasan({ rating, komentar }) {
   if (!rating) errors.rating = "Rating wajib dipilih.";
   else if (!Number.isInteger(nilai) || nilai < 1 || nilai > 5)
     errors.rating = "Rating harus antara 1 sampai 5.";
+
+  if (komentar && komentar.length > BATAS.komentar)
+    errors.komentar = `Komentar maksimal ${BATAS.komentar} karakter.`;
   return errors;
+}
+
+// Alasan penolakan pengajuan pinjam (diisi pegawai). Mengembalikan pesan error atau "".
+export function validateAlasanTolak(alasan) {
+  if (!alasan) return "Alasan penolakan wajib diisi.";
+  if (alasan.length > BATAS.alasan)
+    return `Alasan penolakan maksimal ${BATAS.alasan} karakter.`;
+  return "";
 }
 
 // ---------------------------------------------------------------------
