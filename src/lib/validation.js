@@ -45,8 +45,8 @@ export function validateRegister({
     errors.email = `Gunakan email kampus (${DOMAIN_EMAIL_MAHASISWA}).`;
 
   if (!nomor_identitas) errors.nomor_identitas = "NIM wajib diisi.";
-  else if (!/^\d{5,20}$/.test(nomor_identitas))
-    errors.nomor_identitas = "NIM harus berupa angka (5-20 digit).";
+  else if (!/^[A-Za-z0-9]{3,30}$/.test(nomor_identitas))
+    errors.nomor_identitas = "NIM 3-30 karakter, hanya huruf dan angka.";
 
   if (!password) errors.password = "Password wajib diisi.";
   else if (pesanPasswordBaru(password))

@@ -45,7 +45,6 @@ export default function RegisterForm() {
       <FormField
         label="NIM"
         name="nomor_identitas"
-        inputMode="numeric"
         autoComplete="off"
         defaultValue={values.nomor_identitas ?? ""}
         error={errors.nomor_identitas}
